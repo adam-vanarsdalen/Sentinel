@@ -1,5 +1,7 @@
 # Sentinel
 
+Source available for evaluation only. Reuse, modification, redistribution, and commercial or production use are prohibited without written permission from Sentinel.
+
 Governed AI infrastructure for enterprise workflows.
 
 Sentinel is a multi-tenant AI governance platform that sits between applications and model providers, enforces organizational policy, flags risky usage, and produces audit-ready records. Sentinel is the shared product; `SentinelLaw` is a legal preset/vertical edition on the same core.
