@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
+from app.core.model_catalog import policy_model_options
+
 
 class PolicyTemplate(TypedDict):
     id: str
@@ -23,7 +25,13 @@ def _base_prompt_patterns() -> list[str]:
     ]
 
 
+def _default_allowed_models() -> list[str]:
+    # Keep policy defaults aligned with the canonical model catalog.
+    return policy_model_options(include_mock=True)
+
+
 def list_policy_templates() -> list[PolicyTemplate]:
+    allowed_models = _default_allowed_models()
     return [
         {
             "id": "general_default_policy_v1",
@@ -31,7 +39,7 @@ def list_policy_templates() -> list[PolicyTemplate]:
             "name": "General Default Policy (v1)",
             "description": "Domain-neutral baseline with prompt-injection blocking, output guardrails, and confidential-data exposure signals.",
             "policy_json": {
-                "allowed_models": ["mock"],
+                "allowed_models": list(allowed_models),
                 "max_tokens_per_request": 768,
                 "max_prompt_chars": 60000,
                 "block_prompt_patterns": _base_prompt_patterns(),
@@ -72,7 +80,7 @@ def list_policy_templates() -> list[PolicyTemplate]:
             "name": "Finance Default Policy (v1)",
             "description": "Finance-oriented baseline for regulated workflows, confidential data handling, and provider control.",
             "policy_json": {
-                "allowed_models": ["mock"],
+                "allowed_models": list(allowed_models),
                 "max_tokens_per_request": 640,
                 "max_prompt_chars": 50000,
                 "rate_limits": {"tenant_per_minute": 180, "api_key_per_minute": 45},
@@ -109,7 +117,7 @@ def list_policy_templates() -> list[PolicyTemplate]:
             "name": "Healthcare Default Policy (v1)",
             "description": "Healthcare-oriented baseline for sensitive data handling, prompt safety, and auditable AI workflows.",
             "policy_json": {
-                "allowed_models": ["mock"],
+                "allowed_models": list(allowed_models),
                 "max_tokens_per_request": 640,
                 "max_prompt_chars": 50000,
                 "rate_limits": {"tenant_per_minute": 150, "api_key_per_minute": 40},
@@ -145,7 +153,7 @@ def list_policy_templates() -> list[PolicyTemplate]:
             "name": "Legal Default Policy (v1)",
             "description": "Law-firm oriented baseline: prompt-injection blocking, system prompt hardening, and confidential-data leakage signals.",
             "policy_json": {
-                "allowed_models": ["mock"],
+                "allowed_models": list(allowed_models),
                 "max_tokens_per_request": 768,
                 "max_prompt_chars": 60000,
                 "block_prompt_patterns": _base_prompt_patterns(),
@@ -186,7 +194,7 @@ def list_policy_templates() -> list[PolicyTemplate]:
             "name": "Strict Confidentiality (Recommended) (v1)",
             "description": "Very strict. Enforces prompt-injection blocks, JSON-only responses, and blocks HIGH confidentiality exposure inputs by default.",
             "policy_json": {
-                "allowed_models": ["mock"],
+                "allowed_models": list(allowed_models),
                 "max_tokens_per_request": 640,
                 "max_prompt_chars": 40000,
                 "rate_limits": {"tenant_per_minute": 120, "api_key_per_minute": 30},
@@ -222,7 +230,7 @@ def list_policy_templates() -> list[PolicyTemplate]:
             "name": "No Client Data (Sandbox Mode) (v1)",
             "description": "Maximum strict. Blocks MEDIUM/HIGH confidentiality exposure and requires data_classification metadata. Intended for training and public-only work.",
             "policy_json": {
-                "allowed_models": ["mock"],
+                "allowed_models": list(allowed_models),
                 "max_tokens_per_request": 480,
                 "max_prompt_chars": 20000,
                 "rate_limits": {"tenant_per_minute": 60, "api_key_per_minute": 20},

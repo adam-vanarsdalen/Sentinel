@@ -31,6 +31,7 @@ from app.db.models import (
 )
 from app.db.session import SessionLocal
 from app.services.alerts import default_settings_json
+from app.services.policy_model_sync import reconcile_policy_allowed_models
 from app.services.policy import DEFAULT_POLICY, validate_policy_json
 from app.services.policy_templates import get_policy_template
 
@@ -174,6 +175,7 @@ def _build_policy_json(spec: dict[str, Any]) -> dict[str, Any]:
     overrides = spec.get("overrides") if isinstance(spec.get("overrides"), dict) else {}
     if overrides:
         policy_json = _deep_merge(policy_json, overrides)
+    policy_json, _ = reconcile_policy_allowed_models(policy_json)
     validate_policy_json(policy_json)
     return policy_json
 

@@ -111,6 +111,22 @@ DEFAULT_POLICY: dict[str, Any] = {
 SEVERITY_ORDER = {"low": 0, "med": 1, "high": 2}
 
 
+class PolicyEnforcementError(HTTPException):
+    def __init__(
+        self,
+        *,
+        status_code: int,
+        detail: str,
+        block_stage: str,
+        reason_code: str,
+        matched_rule: str | None = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail)
+        self.block_stage = block_stage
+        self.reason_code = reason_code
+        self.matched_rule = matched_rule
+
+
 def validate_policy_json(policy_json: dict) -> None:
     v = Draft202012Validator(POLICY_SCHEMA)
     errors = sorted(v.iter_errors(policy_json), key=lambda e: e.path)
@@ -129,15 +145,39 @@ def enforce_preflight(
     *, policy: dict, model: str, prompt_text: str, max_tokens: int | None, metadata: dict | None = None
 ) -> None:
     if model not in policy["allowed_models"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Model not allowed by policy")
+        raise PolicyEnforcementError(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Model not allowed by policy",
+            block_stage="preflight_model_allowlist",
+            reason_code="model_not_allowed_by_policy",
+            matched_rule="allowed_models",
+        )
     if max_tokens is not None and max_tokens > int(policy["max_tokens_per_request"]):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="max_tokens exceeds tenant policy")
+        raise PolicyEnforcementError(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="max_tokens exceeds tenant policy",
+            block_stage="preflight_max_tokens",
+            reason_code="max_tokens_exceeds_policy_limit",
+            matched_rule="max_tokens_per_request",
+        )
     if len(prompt_text) > int(policy.get("max_prompt_chars", 20000)):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Prompt too long")
+        raise PolicyEnforcementError(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Prompt too long",
+            block_stage="preflight_prompt_length",
+            reason_code="prompt_too_long",
+            matched_rule="max_prompt_chars",
+        )
     _, normalized_prompt = normalize_text_for_scanning(prompt_text)
     for pat in policy.get("block_prompt_patterns", []):
         if re.search(pat, prompt_text, flags=re.IGNORECASE) or re.search(pat, normalized_prompt, flags=re.IGNORECASE):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Prompt blocked by policy")
+            raise PolicyEnforcementError(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Prompt blocked by policy",
+                block_stage="preflight_prompt_pattern",
+                reason_code="prompt_pattern_block",
+                matched_rule=str(pat),
+            )
     metadata_reqs = policy.get("metadata_requirements") or {}
     if isinstance(metadata_reqs, dict) and metadata_reqs.get("data_classification"):
         allowed = set([str(v) for v in (metadata_reqs.get("data_classification") or [])])
@@ -145,9 +185,12 @@ def enforce_preflight(
         if isinstance(metadata, dict):
             got = metadata.get("data_classification")
         if not got or str(got) not in allowed:
-            raise HTTPException(
+            raise PolicyEnforcementError(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"metadata.data_classification required (allowed: {', '.join(sorted(allowed))})",
+                block_stage="preflight_metadata_requirements",
+                reason_code="metadata_data_classification_required",
+                matched_rule="metadata_requirements.data_classification",
             )
 
 

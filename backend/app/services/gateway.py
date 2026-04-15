@@ -11,7 +11,7 @@ from app.core.cost import estimate_cost_usd
 from app.core.errors import ApiError, ProviderServiceError
 from app.core.request_context import get_request_id
 from app.core.security import sha256_text
-from app.db.models import ApiKey, AuditEvent, TenantPolicy
+from app.db.models import ApiKey, AuditEvent, TenantPolicy, TenantPolicyVersion
 from app.services.alerts import maybe_send_alerts_for_event
 from app.services.audit_log import write_system_audit_event
 from app.services.phi import scan_phi
@@ -47,8 +47,10 @@ class RequestBlocked(Exception):
         flags: list[str] | None = None,
         policy_updated_at: str | None = None,
         policy_version_id: str | None = None,
+        policy_source_template_id: str | None = None,
         rule: str | None = None,
         reason_code: str | None = None,
+        block_stage: str | None = None,
         provider: str | None = None,
         model: str | None = None,
         error_code: str = "POLICY_BLOCKED",
@@ -60,8 +62,10 @@ class RequestBlocked(Exception):
         self.flags = flags or []
         self.policy_updated_at = policy_updated_at
         self.policy_version_id = policy_version_id
+        self.policy_source_template_id = policy_source_template_id
         self.rule = rule
         self.reason_code = reason_code
+        self.block_stage = block_stage
         self.provider = provider
         self.model = model
         self.error_code = error_code
@@ -78,19 +82,24 @@ def _get_policy_info(db: Session, tenant_id: str) -> dict:
     policy_row = db.get(TenantPolicy, tenant_id)
     updated_at = policy_row.updated_at.isoformat() if policy_row else None
     version_id = None
+    source_template_id = None
+    version_row = None
     try:
-        from app.db.models import TenantPolicyVersion
-
-        latest = (
-            db.query(TenantPolicyVersion.id)
-            .filter(TenantPolicyVersion.tenant_id == tenant_id)
-            .order_by(TenantPolicyVersion.created_at.desc())
-            .first()
-        )
-        version_id = latest[0] if latest else None
+        if policy_row and policy_row.active_version_id:
+            version_row = db.get(TenantPolicyVersion, policy_row.active_version_id)
+        if version_row is None:
+            version_row = (
+                db.query(TenantPolicyVersion)
+                .filter(TenantPolicyVersion.tenant_id == tenant_id)
+                .order_by(TenantPolicyVersion.created_at.desc())
+                .first()
+            )
     except Exception:
-        version_id = None
-    return {"updated_at": updated_at, "version_id": version_id}
+        version_row = None
+    if version_row is not None:
+        version_id = version_row.id
+        source_template_id = version_row.source_template_id
+    return {"updated_at": updated_at, "version_id": version_id, "source_template_id": source_template_id}
 
 
 def _estimate_tokens(text: str) -> int:
@@ -114,6 +123,14 @@ def _security_details(signals: SecuritySignals) -> dict[str, Any]:
         "severity": signals.severity,
         "detector_names_triggered": signals.detector_names_triggered,
         "normalized_match_examples": signals.normalized_match_examples,
+    }
+
+
+def _policy_metadata(policy_info: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "updated_at": policy_info.get("updated_at"),
+        "version_id": policy_info.get("version_id"),
+        "source_template_id": policy_info.get("source_template_id"),
     }
 
 
@@ -392,6 +409,11 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
                 "reason_code": e.reason_code,
                 "requested_provider": (requested_provider or "").strip().lower() or None,
                 "requested_model": requested_model,
+                "resolved_provider": denial_provider,
+                "resolved_model": denial_model,
+                "policy": _policy_metadata(policy_info),
+                "block_stage": "provider_routing",
+                "matched_rule": e.reason_code,
             }
         }
         if e.provider_config_id:
@@ -422,8 +444,10 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
             flags=sec.flags,
             policy_updated_at=policy_info.get("updated_at"),
             policy_version_id=policy_info.get("version_id"),
+            policy_source_template_id=policy_info.get("source_template_id"),
             rule="provider_policy",
             reason_code=e.reason_code,
+            block_stage="provider_routing",
             provider=denial_provider,
             model=denial_model,
             error_code="POLICY_BLOCKED",
@@ -449,7 +473,15 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
             practice_group=practice_group,
             client_name=client_name,
             store_redacted=bool((policy.get("logging") or {}).get("store_redacted_snippets", False)),
-            event_data={"metadata": event_metadata} if event_metadata else {},
+            event_data={
+                "metadata": {
+                    **event_metadata,
+                    "policy": _policy_metadata(policy_info),
+                    "block_stage": "provider_routing",
+                    "requested_provider": (requested_provider or "").strip().lower() or None,
+                    "requested_model": requested_model,
+                }
+            },
         )
         raise RequestBlocked(
             status_code=e.status_code,
@@ -457,7 +489,9 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
             flags=sec.flags,
             policy_updated_at=policy_info.get("updated_at"),
             policy_version_id=policy_info.get("version_id"),
+            policy_source_template_id=policy_info.get("source_template_id"),
             rule="provider_routing",
+            block_stage="provider_routing",
             provider=(requested_provider or "").strip().lower() or None,
             model=requested_model,
             error_code="VALIDATION_ERROR" if e.status_code < 500 else "PROVIDER_UNAVAILABLE",
@@ -472,10 +506,17 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
     except HTTPException as e:
         sec = detect_security_signals(prompt_text)
         phi = scan_phi(prompt_text)
+        block_stage = str(getattr(e, "block_stage", "preflight"))
+        reason_code = getattr(e, "reason_code", None)
+        matched_rule = getattr(e, "matched_rule", None)
         phi_cfg = policy.get("phi") or {}
         phi_flags: list[str] = []
-        if isinstance(phi_cfg, dict) and phi_cfg.get("flag_on_any_match") is True and (phi.matches or []):
-            phi_flags.append("CONFIDENTIAL_DATA_DETECTED")
+        if isinstance(phi_cfg, dict):
+            threshold = int(phi_cfg.get("threshold_score", 80))
+            if phi.score >= threshold:
+                phi_flags.append("CONFIDENTIAL_DATA_EXPOSURE")
+            elif phi_cfg.get("flag_on_any_match") is True and (phi.matches or []):
+                phi_flags.append("CONFIDENTIAL_DATA_DETECTED")
         combined_flags = sorted(set((sec.flags or []) + phi_flags))
         _write_audit(
             db,
@@ -495,7 +536,17 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
             practice_group=practice_group,
             client_name=client_name,
             store_redacted=bool((policy.get("logging") or {}).get("store_redacted_snippets", False)),
-            event_data={"metadata": event_metadata} if event_metadata else {},
+            event_data={
+                "metadata": {
+                    **event_metadata,
+                    "policy": _policy_metadata(policy_info),
+                    "block_stage": block_stage,
+                    "reason_code": reason_code,
+                    "matched_rule": matched_rule,
+                    "resolved_provider": provider_name,
+                    "resolved_model": model,
+                }
+            },
         )
         raise RequestBlocked(
             status_code=e.status_code,
@@ -503,6 +554,12 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
             flags=combined_flags,
             policy_updated_at=policy_info.get("updated_at"),
             policy_version_id=policy_info.get("version_id"),
+            policy_source_template_id=policy_info.get("source_template_id"),
+            rule=matched_rule,
+            reason_code=reason_code,
+            block_stage=block_stage,
+            provider=provider_name,
+            model=model,
         )
     messages = apply_required_system_prefix(policy=policy, messages=messages)
 
@@ -511,8 +568,12 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
     phi = scan_phi(prompt_text)
     phi_cfg = policy.get("phi") or {}
     phi_flags = []
-    if isinstance(phi_cfg, dict) and phi_cfg.get("flag_on_any_match") is True and (phi.matches or []):
-        phi_flags.append("CONFIDENTIAL_DATA_DETECTED")
+    if isinstance(phi_cfg, dict):
+        threshold = int(phi_cfg.get("threshold_score", 80))
+        if phi.score >= threshold:
+            phi_flags.append("CONFIDENTIAL_DATA_EXPOSURE")
+        elif phi_cfg.get("flag_on_any_match") is True and (phi.matches or []):
+            phi_flags.append("CONFIDENTIAL_DATA_DETECTED")
 
     if should_block_prompt_injection(policy=policy, signals=sec):
         combined_flags = sorted(set((sec.flags or []) + (phi_flags or [])))
@@ -524,7 +585,7 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
             outcome="fail",
             reason="Prompt injection suspicion exceeded policy threshold",
             model=model,
-            provider=req.get("provider"),
+            provider=provider_name,
             prompt_text=prompt_text,
             response_text="",
             phi_score=phi.score,
@@ -534,17 +595,29 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
             practice_group=practice_group,
             client_name=client_name,
             store_redacted=bool((policy.get("logging") or {}).get("store_redacted_snippets", False)),
-            event_data={"metadata": event_metadata} if event_metadata else {},
+            event_data={
+                "metadata": {
+                    **event_metadata,
+                    "policy": _policy_metadata(policy_info),
+                    "block_stage": "prompt_injection",
+                    "reason_code": "prompt_injection_threshold",
+                    "matched_detector": sec.detector_names_triggered,
+                    "resolved_provider": provider_name,
+                    "resolved_model": model,
+                }
+            },
         )
         raise RequestBlocked(
             block_reason="Prompt injection suspicion exceeded policy threshold",
             flags=combined_flags,
             policy_updated_at=policy_info.get("updated_at"),
             policy_version_id=policy_info.get("version_id"),
+            policy_source_template_id=policy_info.get("source_template_id"),
             rule="security_prompt_injection",
             reason_code="PROMPT_INJECTION_THRESHOLD",
+            block_stage="prompt_injection",
             model=model,
-            provider=req.get("provider"),
+            provider=provider_name,
             security=_security_details(sec),
         )
 
@@ -560,7 +633,7 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
                 outcome="fail",
                 reason="Confidential-data threshold block",
                 model=model,
-                provider=req.get("provider"),
+                provider=provider_name,
                 prompt_text=prompt_text,
                 response_text="",
                 phi_score=phi.score,
@@ -570,14 +643,29 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
                 practice_group=practice_group,
                 client_name=client_name,
                 store_redacted=bool((policy.get("logging") or {}).get("store_redacted_snippets", False)),
-                event_data={"metadata": event_metadata} if event_metadata else {},
+                event_data={
+                    "metadata": {
+                        **event_metadata,
+                        "policy": _policy_metadata(policy_info),
+                        "block_stage": "confidentiality_threshold",
+                        "reason_code": "phi_threshold_block",
+                        "resolved_provider": provider_name,
+                        "resolved_model": model,
+                        "phi_threshold": threshold,
+                    }
+                },
             )
             raise RequestBlocked(
                 block_reason="Blocked due to confidentiality exposure risk",
                 flags=combined_flags,
                 policy_updated_at=policy_info.get("updated_at"),
                 policy_version_id=policy_info.get("version_id"),
+                policy_source_template_id=policy_info.get("source_template_id"),
                 rule="confidentiality_threshold",
+                reason_code="PHI_THRESHOLD_BLOCK",
+                block_stage="confidentiality_threshold",
+                provider=provider_name,
+                model=model,
             )
 
     attempt_trace: list[dict[str, Any]] = []
@@ -623,7 +711,7 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
             practice_group=practice_group,
             client_name=client_name,
             store_redacted=bool((policy.get("logging") or {}).get("store_redacted_snippets", False)),
-            event_data={"metadata": event_metadata, "routing": {"attempts": attempt_trace}},
+            event_data={"metadata": {**event_metadata, "policy": _policy_metadata(policy_info)}, "routing": {"attempts": attempt_trace}},
         )
         raise ApiError(
             status_code=e.status_code,
@@ -655,7 +743,7 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
             practice_group=practice_group,
             client_name=client_name,
             store_redacted=bool((policy.get("logging") or {}).get("store_redacted_snippets", False)),
-            event_data={"metadata": event_metadata, "routing": {"attempts": attempt_trace}},
+            event_data={"metadata": {**event_metadata, "policy": _policy_metadata(policy_info)}, "routing": {"attempts": attempt_trace}},
         )
         raise ApiError(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -688,7 +776,14 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
             client_name=client_name,
             store_redacted=bool((policy.get("logging") or {}).get("store_redacted_snippets", False)),
             event_data={
-                "metadata": event_metadata,
+                "metadata": {
+                    **event_metadata,
+                    "policy": _policy_metadata(policy_info),
+                    "block_stage": "output_validation",
+                    "reason_code": "output_validation_block",
+                    "resolved_provider": provider_name,
+                    "resolved_model": model,
+                },
                 "routing": {"attempts": attempt_trace},
             },
         )
@@ -697,6 +792,11 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
             flags=combined_flags,
             policy_updated_at=policy_info.get("updated_at"),
             policy_version_id=policy_info.get("version_id"),
+            policy_source_template_id=policy_info.get("source_template_id"),
+            block_stage="output_validation",
+            provider=provider_name,
+            model=model,
+            reason_code="OUTPUT_VALIDATION_BLOCK",
         )
 
     prompt_tokens = resp.prompt_tokens if resp.prompt_tokens is not None else _estimate_tokens(prompt_text)
@@ -725,7 +825,7 @@ def handle_chat_completion(db: Session, api_key: ApiKey, req: dict) -> dict:
         client_name=client_name,
         store_redacted=bool((policy.get("logging") or {}).get("store_redacted_snippets", False)),
         event_data={
-            "metadata": event_metadata,
+            "metadata": {**event_metadata, "policy": _policy_metadata(policy_info)},
             "routing": {"attempts": attempt_trace},
         },
     )

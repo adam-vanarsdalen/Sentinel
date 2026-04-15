@@ -314,6 +314,13 @@ def secret_payload(row: TenantProviderConfig) -> dict[str, Any]:
     return decrypt_json(row.encrypted_secret_blob)
 
 
+def _is_placeholder_api_key(value: str | None) -> bool:
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return True
+    return raw.startswith("demo-") or raw.startswith("change_me") or raw.startswith("placeholder")
+
+
 def update_secret_blob(*, row: TenantProviderConfig, secret_json: dict | None, clear_secret: bool) -> None:
     if clear_secret:
         row.encrypted_secret_blob = None
@@ -323,11 +330,24 @@ def update_secret_blob(*, row: TenantProviderConfig, secret_json: dict | None, c
 
 
 def config_runtime_settings(row: TenantProviderConfig) -> dict[str, Any]:
-    settings: dict[str, Any] = {"provider_type": row.provider_type}
-    settings.update(row.config_json or {})
-    settings.update(secret_payload(row))
-    settings["model_allowlist"] = row.model_allowlist or []
-    return settings
+    runtime_settings: dict[str, Any] = {"provider_type": row.provider_type}
+    runtime_settings.update(row.config_json or {})
+    runtime_settings.update(secret_payload(row))
+    # Allow local/container env credentials to override seeded demo placeholder secrets.
+    if row.provider_type == "openai":
+        candidate = runtime_settings.get("api_key")
+        if _is_placeholder_api_key(candidate) and (settings.openai_api_key or "").strip():
+            runtime_settings["api_key"] = settings.openai_api_key
+    elif row.provider_type == "anthropic":
+        candidate = runtime_settings.get("api_key")
+        if _is_placeholder_api_key(candidate) and (settings.anthropic_api_key or "").strip():
+            runtime_settings["api_key"] = settings.anthropic_api_key
+    elif row.provider_type == "azure_openai":
+        candidate = runtime_settings.get("api_key")
+        if _is_placeholder_api_key(candidate) and (settings.azure_openai_api_key or "").strip():
+            runtime_settings["api_key"] = settings.azure_openai_api_key
+    runtime_settings["model_allowlist"] = row.model_allowlist or []
+    return runtime_settings
 
 
 def serialize_provider_policy(row: TenantProviderConfig | None, *, provider_type: str) -> dict[str, Any]:

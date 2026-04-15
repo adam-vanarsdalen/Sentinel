@@ -24,6 +24,7 @@ from app.services.provider_configs import (
     utcnow,
     validate_provider_config_payload,
 )
+from app.services.policy_model_sync import reconcile_tenant_policy_rows
 from app.services.providers.anthropic_provider import AnthropicProvider
 from app.services.providers.azure_openai_provider import AzureOpenAiProvider
 from app.services.providers.openai_provider import OpenAiProvider
@@ -187,6 +188,11 @@ def _write_provider_policy_update_audit(db: DbDep, *, tenant_id: str, user_id: s
     )
 
 
+def _sync_policy_model_allowlist_if_stale(db: DbDep, *, tenant_id: str) -> None:
+    if reconcile_tenant_policy_rows(db, tenant_id=tenant_id):
+        db.commit()
+
+
 @router.get("/policy", response_model=ProviderPolicyResponse)
 def get_provider_policy(db: DbDep, user: ProviderConfigAdmin) -> ProviderPolicyResponse:
     tenant_id = _tenant_id_for(user)
@@ -253,6 +259,7 @@ def update_provider_policy(req: ProviderPolicyUpdateRequest, db: DbDep, user: Pr
         set_default_provider_config(db, tenant_id=tenant_id, provider_config_id=target.id)
 
     db.commit()
+    _sync_policy_model_allowlist_if_stale(db, tenant_id=tenant_id)
     _write_provider_policy_update_audit(db, tenant_id=tenant_id, user_id=user.id)
     return build_provider_policy_snapshot(db, tenant_id=tenant_id)
 
@@ -316,6 +323,7 @@ def create_provider_config(req: ProviderConfigCreateRequest, db: DbDep, user: Pr
         set_default_provider_config(db, tenant_id=tenant_id, provider_config_id=row.id)
         db.commit()
         db.refresh(row)
+    _sync_policy_model_allowlist_if_stale(db, tenant_id=tenant_id)
 
     write_admin_audit_event(
         db,
@@ -380,6 +388,7 @@ def update_provider_config(
         db.add(row)
     db.commit()
     db.refresh(row)
+    _sync_policy_model_allowlist_if_stale(db, tenant_id=tenant_id)
 
     write_admin_audit_event(
         db,
@@ -401,6 +410,7 @@ def delete_provider_config(provider_config_id: str, db: DbDep, user: ProviderCon
     event_data = _audit_event_payload(row)
     db.delete(row)
     db.commit()
+    _sync_policy_model_allowlist_if_stale(db, tenant_id=tenant_id)
     write_admin_audit_event(
         db,
         tenant_id=tenant_id,
@@ -423,6 +433,7 @@ def set_provider_config_default(provider_config_id: str, db: DbDep, user: Provid
     target = set_default_provider_config(db, tenant_id=tenant_id, provider_config_id=provider_config_id)
     db.commit()
     db.refresh(target)
+    _sync_policy_model_allowlist_if_stale(db, tenant_id=tenant_id)
     write_admin_audit_event(
         db,
         tenant_id=tenant_id,

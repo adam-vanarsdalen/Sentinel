@@ -20,6 +20,7 @@ from app.services.policy import (
     validate_policy_json,
 )
 from app.services.policy_templates import get_policy_template, list_policy_templates
+from app.services.policy_model_sync import reconcile_policy_allowed_models
 from app.services.phi import confidentiality_exposure_level, scan_phi
 from app.services.security_flags import detect_security_signals
 
@@ -124,6 +125,7 @@ def _create_policy_version(
     source_template_id: str | None = None,
     source_version_id: str | None = None,
 ) -> tuple[TenantPolicy, TenantPolicyVersion]:
+    policy_json, _ = reconcile_policy_allowed_models(policy_json)
     policy = db.get(TenantPolicy, tenant_id)
     now = _now_utc()
     if not policy:
@@ -244,11 +246,12 @@ def update_policy(req: PolicyUpdateRequest, db: DbDep, user: PolicyWriter) -> Po
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant context required")
 
-    validate_policy_json(req.policy_json)
+    reconciled_policy_json, _ = reconcile_policy_allowed_models(req.policy_json)
+    validate_policy_json(reconciled_policy_json)
     policy, version = _create_policy_version(
         db,
         tenant_id=tenant_id,
-        policy_json=req.policy_json,
+        policy_json=reconciled_policy_json,
         user_id=user.id,
         change_note=(req.change_note or None),
         source_template_id=(req.source_template_id or None),
@@ -295,23 +298,25 @@ def update_policy(req: PolicyUpdateRequest, db: DbDep, user: PolicyWriter) -> Po
 
 @router.post("/test", response_model=dict)
 def test_policy(req: PolicyUpdateRequest, user: Annotated[User, Depends(require_role("super_admin", "org_admin", "compliance_admin", "operator"))]) -> dict:
-    validate_policy_json(req.policy_json)
+    reconciled_policy_json, _ = reconcile_policy_allowed_models(req.policy_json)
+    validate_policy_json(reconciled_policy_json)
     return {"ok": True}
 
 
 @router.post("/dry-run", response_model=dict)
 def dry_run(req: PolicyDryRunRequest, user: Annotated[User, Depends(require_role("super_admin", "org_admin", "compliance_admin", "operator"))]) -> dict:
-    validate_policy_json(req.policy_json)
+    policy_json, _ = reconcile_policy_allowed_models(req.policy_json)
+    validate_policy_json(policy_json)
     messages = req.messages or []
     prompt_text = "\n".join([m.get("content", "") for m in messages])
-    messages = apply_required_system_prefix(policy=req.policy_json, messages=messages)
+    messages = apply_required_system_prefix(policy=policy_json, messages=messages)
 
     flags: list[str] = []
     outcome = "ALLOW"
     block_reason = None
     try:
         enforce_preflight(
-            policy=req.policy_json, model=req.model, prompt_text=prompt_text, max_tokens=None, metadata=req.metadata
+            policy=policy_json, model=req.model, prompt_text=prompt_text, max_tokens=None, metadata=req.metadata
         )
     except Exception as e:
         outcome = "BLOCK"
@@ -319,10 +324,10 @@ def dry_run(req: PolicyDryRunRequest, user: Annotated[User, Depends(require_role
 
     sec = detect_security_signals(prompt_text)
     phi = scan_phi(prompt_text)
-    phi_cfg = req.policy_json.get("phi") or {}
+    phi_cfg = policy_json.get("phi") or {}
     if isinstance(phi_cfg, dict) and phi_cfg.get("flag_on_any_match") is True and (phi.matches or []):
         flags.append("CONFIDENTIAL_DATA_DETECTED")
-    if outcome != "BLOCK" and should_block_prompt_injection(policy=req.policy_json, signals=sec):
+    if outcome != "BLOCK" and should_block_prompt_injection(policy=policy_json, signals=sec):
         outcome = "BLOCK"
         block_reason = "Prompt injection suspicion exceeded policy threshold"
     if outcome != "BLOCK" and isinstance(phi_cfg, dict) and phi_cfg.get("enabled", True):
@@ -336,7 +341,7 @@ def dry_run(req: PolicyDryRunRequest, user: Annotated[User, Depends(require_role
     out_flags: list[str] = []
     out_block = False
     if output_text is not None:
-        out_flags, out_block = evaluate_output_rules(policy=req.policy_json, output_text=output_text)
+        out_flags, out_block = evaluate_output_rules(policy=policy_json, output_text=output_text)
         if out_block and outcome != "BLOCK":
             outcome = "BLOCK"
             block_reason = f'Output blocked by {get_terminology().get("rules_label") or "AI Rules"}'

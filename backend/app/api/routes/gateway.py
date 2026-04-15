@@ -84,12 +84,15 @@ def chat_completions(
             "outcome": "BLOCKED",
             "block_reason": e.block_reason,
             "reason_code": e.reason_code,
+            "block_stage": e.block_stage,
             "flags": e.flags,
             "policy": {
                 "updated_at": e.policy_updated_at,
                 "version_id": e.policy_version_id,
+                "source_template_id": e.policy_source_template_id,
                 "rule": e.rule,
                 "reason_code": e.reason_code,
+                "block_stage": e.block_stage,
             },
         }
         if e.provider is not None:
