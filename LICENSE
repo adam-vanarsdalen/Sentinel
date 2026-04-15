@@ -1,21 +1,36 @@
-MIT License
+Sentinel Proprietary Evaluation License
+Copyright (c) 2026 Sentinel. All rights reserved.
 
-Copyright (c) 2026 Sentinel
+Permission is granted to view and access this repository and its contents solely for
+personal, internal, non-commercial evaluation of the Software.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Except for the limited permission above, no rights are granted, whether expressly,
+by implication, estoppel, or otherwise.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Without prior written permission from Sentinel, you may not:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+1. use, copy, reproduce, modify, adapt, translate, or create derivative works of the Software;
+2. distribute, publish, sublicense, lease, lend, sell, transfer, or otherwise make the Software
+   or any portion of it available to any third party;
+3. use the Software or any portion of it in production, in a commercial environment,
+   or for the benefit of any business or organization;
+4. incorporate the Software or any portion of it into another product, service, model,
+   codebase, dataset, or offering;
+5. remove or alter any copyright, trademark, confidentiality, or proprietary notices;
+6. use the name "Sentinel" or any related branding, logos, or marks without prior written permission.
+
+For the avoidance of doubt, public visibility of this repository does not grant permission
+to reuse the Software. Viewing for evaluation is permitted; reuse is not.
+
+This license does not grant any patent rights, trademark rights, or other intellectual
+property rights except as expressly stated above.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, TITLE, AND NON-INFRINGEMENT. IN NO EVENT SHALL SENTINEL OR THE COPYRIGHT HOLDERS
+BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+OR OTHER DEALINGS IN THE SOFTWARE.
+
+For licensing or commercial use inquiries, contact:
+your-email@example.com
