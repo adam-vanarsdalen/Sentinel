@@ -1,0 +1,17 @@
+{
+  "organization_singular": "Institution",
+  "organization_plural": "Institutions",
+  "organization_context": "institution",
+  "rules_label": "AI Control Rules",
+  "report_label": "Oversight Report",
+  "activity_log_label": "AI Activity Log",
+  "workflow": {
+    "primary_entity_label": "Engagement",
+    "secondary_entity_label": "Desk",
+    "external_party_label": "Counterparty"
+  },
+  "messages": {
+    "blocked_by_rules": "Blocked by AI Control Rules.",
+    "organization_context_required": "Institution context is required."
+  }
+}

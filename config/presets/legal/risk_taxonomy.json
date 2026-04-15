@@ -1,0 +1,41 @@
+{
+  "shared_categories": [
+    {
+      "id": "CONFIDENTIAL_DATA_EXPOSURE",
+      "label": "Confidential Data Exposure",
+      "description": "Sensitive client or matter information may have been included in a request or response."
+    },
+    {
+      "id": "PROMPT_INJECTION",
+      "label": "Prompt Injection or Manipulation",
+      "description": "A document or prompt may be attempting to override drafting instructions or governance controls."
+    },
+    {
+      "id": "POLICY_VIOLATION",
+      "label": "Policy Violation",
+      "description": "A request or response violated configured firm AI rules."
+    },
+    {
+      "id": "PROVIDER_MISUSE",
+      "label": "Provider Misuse",
+      "description": "An unapproved provider, model, or routing behavior was requested."
+    },
+    {
+      "id": "APPROVAL_REQUIRED",
+      "label": "Approval Required",
+      "description": "The action should not proceed without explicit legal or compliance review."
+    },
+    {
+      "id": "AUDITABILITY_GAP",
+      "label": "Auditability Gap",
+      "description": "Required matter, client, or traceability details were missing."
+    }
+  ],
+  "preset_categories": [
+    {
+      "id": "CLIENT_PRIVILEGE_RISK",
+      "label": "Privilege Risk",
+      "description": "Attorney-client privileged or work-product material may be exposed."
+    }
+  ]
+}

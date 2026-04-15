@@ -1,0 +1,41 @@
+{
+  "shared_categories": [
+    {
+      "id": "CONFIDENTIAL_DATA_EXPOSURE",
+      "label": "Confidential Data Exposure",
+      "description": "Sensitive patient or operational information may have been included in a request or response."
+    },
+    {
+      "id": "PROMPT_INJECTION",
+      "label": "Prompt Injection or Manipulation",
+      "description": "An input may be attempting to override safety instructions or manipulate the system."
+    },
+    {
+      "id": "POLICY_VIOLATION",
+      "label": "Policy Violation",
+      "description": "A request or response violated configured AI safety rules."
+    },
+    {
+      "id": "PROVIDER_MISUSE",
+      "label": "Provider Misuse",
+      "description": "An unapproved provider, model, or routing behavior was requested."
+    },
+    {
+      "id": "APPROVAL_REQUIRED",
+      "label": "Approval Required",
+      "description": "The action should not proceed without explicit clinical, privacy, or safety review."
+    },
+    {
+      "id": "AUDITABILITY_GAP",
+      "label": "Auditability Gap",
+      "description": "Required safety or traceability details were missing."
+    }
+  ],
+  "preset_categories": [
+    {
+      "id": "CARE_SAFETY_RISK",
+      "label": "Care Safety Risk",
+      "description": "A response may create unsafe or inappropriate care workflow guidance."
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "super_admin": {
+    "label": "Platform Admin",
+    "description": "Manages the full Sentinel Finance platform across institutions."
+  },
+  "org_admin": {
+    "label": "Institution Admin",
+    "description": "Full administrative control within one institution."
+  },
+  "compliance_admin": {
+    "label": "Controls Admin",
+    "description": "Manages governance rules, alerts, and oversight controls."
+  },
+  "operator": {
+    "label": "Operations Lead",
+    "description": "Manages integrations, API keys, and operational testing."
+  },
+  "reviewer": {
+    "label": "Reviewer",
+    "description": "Views dashboards and monitored activity."
+  },
+  "auditor": {
+    "label": "Auditor",
+    "description": "Reviews logs, reports, and oversight evidence."
+  }
+}

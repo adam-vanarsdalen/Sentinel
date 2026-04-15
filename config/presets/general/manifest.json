@@ -1,0 +1,14 @@
+{
+  "id": "general",
+  "name": "General",
+  "industry": "general",
+  "product_name": "Sentinel",
+  "console_name": "Sentinel Console",
+  "default_policy_template_id": "general_default_policy_v1",
+  "support_email": "support@sentinel.local",
+  "demo": {
+    "organization_name": "Northwind Operations",
+    "admin_email": "admin@northwind.example",
+    "api_key_name": "northwind-ops-assistant"
+  }
+}

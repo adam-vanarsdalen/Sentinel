@@ -1,0 +1,26 @@
+{
+  "super_admin": {
+    "label": "Platform Admin",
+    "description": "Manages the full Sentinel platform across organizations."
+  },
+  "org_admin": {
+    "label": "Org Admin",
+    "description": "Full administrative control within one organization."
+  },
+  "compliance_admin": {
+    "label": "Compliance Admin",
+    "description": "Manages governance rules, alerts, and oversight settings."
+  },
+  "operator": {
+    "label": "Operator",
+    "description": "Manages integrations, API keys, and operational testing."
+  },
+  "reviewer": {
+    "label": "Reviewer",
+    "description": "Views dashboards and activity relevant to daily oversight."
+  },
+  "auditor": {
+    "label": "Auditor",
+    "description": "Reviews logs, reports, and audit evidence."
+  }
+}

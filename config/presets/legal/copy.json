@@ -1,0 +1,13 @@
+{
+  "landing_eyebrow": "SentinelLaw",
+  "landing_title": "AI governance built for law firms",
+  "landing_description": "SentinelLaw helps firms use AI confidently by enforcing firm policies, monitoring confidential data exposure, and maintaining a defensible audit trail.",
+  "landing_highlights": [
+    "Enforce firm AI rules across drafting and review tools.",
+    "Monitor confidential data exposure and legal workflow risks.",
+    "Maintain an exportable audit trail for every AI interaction by user, matter, and practice group."
+  ],
+  "login_description": "SentinelLaw admin console",
+  "trial_title": "Request a Free Trial",
+  "trial_description": "Send your details and we will follow up to set up a legal demo environment."
+}

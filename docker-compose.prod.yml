@@ -1,0 +1,163 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build:
+      context: ./backend
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      ENVIRONMENT: ${ENVIRONMENT}
+      APP_VERSION: ${APP_VERSION}
+      JWT_SECRET: ${JWT_SECRET}
+      SENTINEL_SECRET_KEY: ${SENTINEL_SECRET_KEY}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      ACCESS_TOKEN_EXPIRES_MINUTES: ${ACCESS_TOKEN_EXPIRES_MINUTES}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      SEED_DEMO: ${SEED_DEMO}
+      DEMO_SUPER_ADMIN_EMAIL: ${DEMO_SUPER_ADMIN_EMAIL}
+      DEMO_SUPER_ADMIN_PASSWORD: ${DEMO_SUPER_ADMIN_PASSWORD}
+      DEMO_TENANT_ADMIN_EMAIL: ${DEMO_TENANT_ADMIN_EMAIL}
+      DEMO_TENANT_ADMIN_PASSWORD: ${DEMO_TENANT_ADMIN_PASSWORD}
+      DEMO_APP_API_KEY: ${DEMO_APP_API_KEY}
+      PROVIDER_DEFAULT: ${PROVIDER_DEFAULT}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION}
+      RATE_LIMIT_TENANT_PER_MINUTE: ${RATE_LIMIT_TENANT_PER_MINUTE}
+      RATE_LIMIT_APIKEY_PER_MINUTE: ${RATE_LIMIT_APIKEY_PER_MINUTE}
+      STORE_REDACTED_SNIPPETS_DEFAULT: ${STORE_REDACTED_SNIPPETS_DEFAULT}
+      STORE_RAW_CONTENT_DEFAULT: ${STORE_RAW_CONTENT_DEFAULT}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/readyz').read()\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  worker:
+    build:
+      context: ./backend
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      ENVIRONMENT: ${ENVIRONMENT}
+      APP_VERSION: ${APP_VERSION}
+      JWT_SECRET: ${JWT_SECRET}
+      SENTINEL_SECRET_KEY: ${SENTINEL_SECRET_KEY}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      ACCESS_TOKEN_EXPIRES_MINUTES: ${ACCESS_TOKEN_EXPIRES_MINUTES}
+      PROVIDER_DEFAULT: ${PROVIDER_DEFAULT}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import redis; from app.core.config import settings; redis.Redis.from_url(settings.redis_url).ping()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    command: ["celery", "-A", "app.worker.celery", "worker", "-l", "info"]
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+    environment:
+      API_BASE_URL: http://backend:8000
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+      NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL}
+      NEXT_PUBLIC_APP_VERSION: ${APP_VERSION}
+    depends_on:
+      backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: always
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
+configs:
+  caddyfile:
+    content: |
+      ${PUBLIC_DOMAIN} {
+        tls ${CADDY_EMAIL}
+        encode gzip
+
+        reverse_proxy /metrics backend:8000
+        reverse_proxy /health backend:8000
+        reverse_proxy /healthz backend:8000
+        reverse_proxy /ready backend:8000
+        reverse_proxy /readyz backend:8000
+        reverse_proxy /v1/* backend:8000
+        reverse_proxy /auth/* backend:8000
+        reverse_proxy /public/* backend:8000
+        reverse_proxy /platform/* backend:8000
+        reverse_proxy /admin/* backend:8000
+
+        reverse_proxy frontend:3000
+      }

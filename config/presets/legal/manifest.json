@@ -1,0 +1,14 @@
+{
+  "id": "legal",
+  "name": "Legal",
+  "industry": "legal",
+  "product_name": "SentinelLaw",
+  "console_name": "SentinelLaw Console",
+  "default_policy_template_id": "legal_default_policy_v1",
+  "support_email": "support@sentinellaw.io",
+  "demo": {
+    "organization_name": "Calder & Pine LLP",
+    "admin_email": "admin@calderpine.example",
+    "api_key_name": "calderpine-contract-review"
+  }
+}

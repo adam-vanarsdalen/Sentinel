@@ -1,0 +1,14 @@
+{
+  "id": "finance",
+  "name": "Finance",
+  "industry": "finance",
+  "product_name": "Sentinel Finance",
+  "console_name": "Sentinel Finance Console",
+  "default_policy_template_id": "finance_default_policy_v1",
+  "support_email": "support@sentinel.finance",
+  "demo": {
+    "organization_name": "Harborview Capital Advisors",
+    "admin_email": "admin@harborview.example",
+    "api_key_name": "harborview-investment-memo"
+  }
+}

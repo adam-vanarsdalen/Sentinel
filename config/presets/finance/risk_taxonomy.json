@@ -1,0 +1,41 @@
+{
+  "shared_categories": [
+    {
+      "id": "CONFIDENTIAL_DATA_EXPOSURE",
+      "label": "Confidential Data Exposure",
+      "description": "Sensitive customer or institutional information may have been included in a request or response."
+    },
+    {
+      "id": "PROMPT_INJECTION",
+      "label": "Prompt Injection or Manipulation",
+      "description": "An input may be attempting to override workflow or compliance instructions."
+    },
+    {
+      "id": "POLICY_VIOLATION",
+      "label": "Policy Violation",
+      "description": "A request or response violated configured AI control rules."
+    },
+    {
+      "id": "PROVIDER_MISUSE",
+      "label": "Provider Misuse",
+      "description": "An unapproved provider, model, or routing behavior was requested."
+    },
+    {
+      "id": "APPROVAL_REQUIRED",
+      "label": "Approval Required",
+      "description": "The action should not proceed without explicit supervisory or risk review."
+    },
+    {
+      "id": "AUDITABILITY_GAP",
+      "label": "Auditability Gap",
+      "description": "Required oversight or traceability details were missing."
+    }
+  ],
+  "preset_categories": [
+    {
+      "id": "MARKET_DISCLOSURE_RISK",
+      "label": "Market Disclosure Risk",
+      "description": "A response may create unsuitable, misleading, or premature market-facing content."
+    }
+  ]
+}

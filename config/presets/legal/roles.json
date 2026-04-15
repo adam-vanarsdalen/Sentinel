@@ -1,0 +1,26 @@
+{
+  "super_admin": {
+    "label": "Platform Admin",
+    "description": "Manages the full SentinelLaw platform across firms."
+  },
+  "org_admin": {
+    "label": "Firm Admin",
+    "description": "Full administrative control within one firm."
+  },
+  "compliance_admin": {
+    "label": "Compliance Admin",
+    "description": "Manages governance rules, alerts, and compliance controls."
+  },
+  "operator": {
+    "label": "Integration User",
+    "description": "Manages integrations, API keys, and operational testing."
+  },
+  "reviewer": {
+    "label": "Staff",
+    "description": "Views dashboards and day-to-day firm activity."
+  },
+  "auditor": {
+    "label": "Compliance Reviewer",
+    "description": "Reviews logs, reports, and audit evidence."
+  }
+}

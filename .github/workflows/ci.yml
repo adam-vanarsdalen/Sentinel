@@ -1,0 +1,32 @@
+name: ci
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  release-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run release validation
+        env:
+          APP_VERSION: ci-${{ github.sha }}
+          ARTIFACTS_DIR: artifacts/validate-release
+          COMPOSE_PROJECT_NAME: sentinel_ci
+          BACKEND_PORT: "18000"
+          FRONTEND_PORT: "13000"
+        run: ./scripts/validate_release.sh
+
+      - name: Upload validation artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-validation-artifacts
+          path: |
+            artifacts/validate-release
+          if-no-files-found: warn

@@ -1,0 +1,13 @@
+{
+  "landing_eyebrow": "Sentinel Health",
+  "landing_title": "AI governance for care operations",
+  "landing_description": "Sentinel Health helps care organizations apply consistent safeguards, monitor sensitive data exposure, and preserve auditable records around AI use.",
+  "landing_highlights": [
+    "Apply AI safety rules before care workflow requests reach a model.",
+    "Monitor sensitive data exposure, manipulation attempts, and policy violations.",
+    "Maintain exportable oversight records across cases, departments, and systems."
+  ],
+  "login_description": "Sentinel Health admin console",
+  "trial_title": "Request a Healthcare Demo",
+  "trial_description": "Send your details and we will follow up to set up a healthcare-focused demo environment."
+}

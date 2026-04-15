@@ -1,0 +1,17 @@
+{
+  "organization_singular": "Organization",
+  "organization_plural": "Organizations",
+  "organization_context": "organization",
+  "rules_label": "Organization AI Rules",
+  "report_label": "Audit Report",
+  "activity_log_label": "AI Activity Log",
+  "workflow": {
+    "primary_entity_label": "Work Item",
+    "secondary_entity_label": "Workstream",
+    "external_party_label": "Customer"
+  },
+  "messages": {
+    "blocked_by_rules": "Blocked by AI Rules.",
+    "organization_context_required": "Organization context is required."
+  }
+}

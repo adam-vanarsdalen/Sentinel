@@ -1,0 +1,13 @@
+{
+  "landing_eyebrow": "Sentinel",
+  "landing_title": "AI governance between your users and model providers",
+  "landing_description": "Sentinel is an AI governance layer that sits between users and model providers, enforces organizational rules, flags risky usage, and creates an audit trail.",
+  "landing_highlights": [
+    "Enforce organization AI rules across tools and teams before requests reach a model.",
+    "Monitor confidential data exposure, policy violations, and prompt manipulation signals.",
+    "Maintain an exportable audit trail for every AI interaction."
+  ],
+  "login_description": "Sentinel admin console",
+  "trial_title": "Request a Demo",
+  "trial_description": "Send your details and we will follow up to set up a demo workspace."
+}

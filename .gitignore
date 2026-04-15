@@ -1,0 +1,42 @@
+# Environment files (never commit secrets)
+.env
+.env.*
+!.env.example
+!.env.production.template
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+backend/.coverage
+backend/htmlcov/
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+frontend/out/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Logs / artifacts / local agent state
+*.log
+artifacts/
+.agent/
+frontend/playwright-report/
+frontend/test-results/

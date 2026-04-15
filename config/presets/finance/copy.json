@@ -1,0 +1,13 @@
+{
+  "landing_eyebrow": "Sentinel Finance",
+  "landing_title": "AI governance for financial operations",
+  "landing_description": "Sentinel Finance helps institutions control AI usage across advisory, operations, and reporting workflows with auditable governance.",
+  "landing_highlights": [
+    "Apply AI control rules before regulated workflow requests reach a model.",
+    "Monitor confidential financial data exposure and routing misuse.",
+    "Maintain exportable oversight records across teams and engagements."
+  ],
+  "login_description": "Sentinel Finance admin console",
+  "trial_title": "Request a Finance Demo",
+  "trial_description": "Send your details and we will follow up to set up a finance-focused demo environment."
+}

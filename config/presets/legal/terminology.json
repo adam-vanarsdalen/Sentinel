@@ -1,0 +1,17 @@
+{
+  "organization_singular": "Firm",
+  "organization_plural": "Firms",
+  "organization_context": "firm",
+  "rules_label": "Firm AI Rules",
+  "report_label": "Client Audit Report",
+  "activity_log_label": "AI Activity Log",
+  "workflow": {
+    "primary_entity_label": "Matter",
+    "secondary_entity_label": "Practice Group",
+    "external_party_label": "Client"
+  },
+  "messages": {
+    "blocked_by_rules": "Blocked by Firm AI Rules.",
+    "organization_context_required": "Firm context is required."
+  }
+}

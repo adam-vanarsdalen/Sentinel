@@ -1,0 +1,14 @@
+{
+  "id": "healthcare",
+  "name": "Healthcare",
+  "industry": "healthcare",
+  "product_name": "Sentinel Health",
+  "console_name": "Sentinel Health Console",
+  "default_policy_template_id": "healthcare_default_policy_v1",
+  "support_email": "support@sentinel.health",
+  "demo": {
+    "organization_name": "Riverbend Care Network",
+    "admin_email": "admin@riverbend.example",
+    "api_key_name": "riverbend-care-assistant"
+  }
+}
