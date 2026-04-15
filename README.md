@@ -18,6 +18,7 @@ Enterprise AI adoption is moving faster than governance controls. Teams need a p
 - tenant-scoped gateway for model requests
 - policy engine with allow/block/flag/review outcomes
 - provider routing controls and model allowlists
+- first-class providers: OpenAI, Anthropic, Azure OpenAI, and Ollama
 - security/risk signals (prompt injection, sensitive data exposure, misuse patterns)
 - immutable audit trail and exportable reporting
 - preset-driven terminology and demo framing (`general`, `legal`, `finance`, `healthcare`)
@@ -51,6 +52,13 @@ See [ARCHITECTURE](docs/ARCHITECTURE.md) for detailed request flow and trust bou
 cp .env.example .env
 docker compose up --build
 ```
+
+Optional local Ollama defaults are already scaffolded in `.env.example`:
+
+- `OLLAMA_ENABLED=0`
+- `OLLAMA_BASE_URL=http://localhost:11434/v1/`
+- `OLLAMA_API_KEY=` (optional; kept local and never committed)
+- `OLLAMA_DEFAULT_MODEL=gpt-oss:120b-cloud`
 
 Then open:
 

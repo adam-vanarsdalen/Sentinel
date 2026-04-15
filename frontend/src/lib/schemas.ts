@@ -60,7 +60,7 @@ export const ApiKeyCreateResponseSchema = z.object({
 });
 export type ApiKeyCreateResponse = z.infer<typeof ApiKeyCreateResponseSchema>;
 
-export const ProviderTypeSchema = z.enum(["openai", "anthropic", "azure_openai"]);
+export const ProviderTypeSchema = z.enum(["openai", "anthropic", "azure_openai", "ollama"]);
 export type ProviderType = z.infer<typeof ProviderTypeSchema>;
 
 export const ProviderConfigSchema = z.object({
@@ -105,6 +105,7 @@ export const ProviderCatalogModelSchema = z.object({
   display_name: z.string(),
   status: z.string(),
   aliases: z.array(z.string()).default([]),
+  capabilities: z.array(z.string()).default([]),
 });
 export type ProviderCatalogModel = z.infer<typeof ProviderCatalogModelSchema>;
 

@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     azure_openai_endpoint: str | None = None
     azure_openai_api_key: str | None = None
     azure_openai_api_version: str | None = None
+    ollama_enabled: bool = False
+    ollama_api_key: str | None = None
+    ollama_base_url: str = "http://localhost:11434/v1/"
+    ollama_default_model: str = "gpt-oss:120b-cloud"
 
     rate_limit_tenant_per_minute: int = 600
     rate_limit_apikey_per_minute: int = 120

@@ -18,6 +18,7 @@ Recommended defaults for first run:
 - `SENTINEL_PRESET=general`
 - `NEXT_PUBLIC_SENTINEL_PRESET=general`
 - `SEED_DEMO=1`
+- `OLLAMA_ENABLED=0` (set to `1` only if local Ollama host is available)
 
 ## 2. Start the stack
 
@@ -53,6 +54,8 @@ Legal demo login:
 
 - `GET /health` or `GET /healthz`
 - `GET /ready` or `GET /readyz`
+
+When `OLLAMA_ENABLED=1`, `/ready` also checks Ollama reachability using `OLLAMA_BASE_URL` and reports an `ollama` check entry.
 
 ## 6. Optional smoke test
 

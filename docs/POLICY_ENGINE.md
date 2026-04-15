@@ -35,6 +35,7 @@ The policy engine is Sentinel’s central enforcement layer for AI governance. I
 
 - Policy checks gate provider routing decisions.
 - Provider/model approval rules are enforced before request execution.
+- Discovery metadata (for providers like Ollama) does not auto-approve models; explicit policy/provider allowlists still control execution.
 - Routing attempts/fallback behavior are reflected in audit metadata.
 
 ## Interaction with audit and reporting

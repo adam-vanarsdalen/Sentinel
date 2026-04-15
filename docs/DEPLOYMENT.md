@@ -32,6 +32,12 @@ Production checklist:
 - terminate TLS at ingress/reverse proxy
 - restrict network access to backend and data services
 
+Ollama-specific local deployment notes:
+
+- Runtime API base URL should be OpenAI-compatible (`OLLAMA_BASE_URL=http://localhost:11434/v1/` by default).
+- Keep `OLLAMA_API_KEY` in local/runtime env only. Sentinel never returns provider secrets in API responses.
+- Even when Ollama has additional local models installed, Sentinel policy/provider allowlists still gate what can run.
+
 ## Preset-specific startup
 
 Default shared Sentinel:

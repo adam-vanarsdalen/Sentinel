@@ -1,3 +1,4 @@
+import httpx
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 from redis import Redis
@@ -7,6 +8,7 @@ from app.api.deps import DbDep
 from app.core.config import settings
 from app.core.presets import get_active_preset_id, get_demo_defaults, get_demo_seed, get_product_name, list_presets
 from app.db.models import Tenant
+from app.services.providers.ollama_provider import _native_base_url
 from app.services.policy_templates import list_policy_templates
 
 router = APIRouter()
@@ -72,6 +74,19 @@ def readyz(db: DbDep) -> dict:
         checks["policy_templates"] = {"ok": len(templates) > 0, "count": len(templates)}
     except Exception as e:
         checks["policy_templates"] = {"ok": False, "error": "policy_templates_check_failed", "type": e.__class__.__name__}
+
+    # 5) Optional Ollama reachability check
+    if settings.ollama_enabled:
+        native_base = _native_base_url(settings.ollama_base_url)
+        try:
+            response = httpx.get(f"{native_base}/api/version", timeout=3.0)
+            response.raise_for_status()
+            body = response.json() if response.content else {}
+            checks["ollama"] = {"ok": True, "base_url": settings.ollama_base_url, "version": body.get("version")}
+        except Exception as e:
+            checks["ollama"] = {"ok": False, "base_url": settings.ollama_base_url, "error": "ollama_unreachable", "type": e.__class__.__name__}
+    else:
+        checks["ollama"] = {"ok": True, "skipped": True, "reason": "OLLAMA_ENABLED disabled"}
 
     ok = all(bool(v.get("ok")) for v in checks.values())
     payload = {"ok": ok, "checks": checks}

@@ -17,6 +17,7 @@ test("tenant admin can save provider configs, keep secrets masked, and change th
   await expect(page.getByTestId("dashboard")).toBeVisible();
   await page.goto("/providers");
   await expect(page.getByTestId("provider-settings")).toBeVisible();
+  await expect(page.getByTestId("provider-card-ollama")).toBeVisible();
 
   const openAiCard = page.getByTestId("provider-card-openai");
   await openAiCard.getByLabel("Enable this provider for organization traffic").check();

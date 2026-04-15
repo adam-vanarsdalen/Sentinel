@@ -73,9 +73,9 @@ Operational guidance and recommended retention ranges for pilot deployments are 
 
 ## Provider API keys and where they are stored
 
-SentinelLaw treats *provider* credentials (OpenAI/Anthropic/Azure OpenAI) as runtime configuration:
+Sentinel treats *provider* credentials (OpenAI/Anthropic/Azure OpenAI/Ollama) as runtime configuration:
 
-- Provider API keys are read from environment variables (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AZURE_OPENAI_API_KEY`).
+- Provider API keys are read from environment variables (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AZURE_OPENAI_API_KEY`, `OLLAMA_API_KEY`).
 - Provider API keys are **not stored in the database**.
 
 Note: SentinelLaw also has its own **gateway API keys** for client applications. Those are stored in the database in **hashed** form (prefix + salt + hash) so the plaintext token cannot be recovered.
@@ -93,4 +93,3 @@ This is logical isolation within a shared database. If you require physical isol
 ## Important operational note
 
 Even if SentinelLaw does not store raw prompt/response by default, the selected LLM provider may log or retain request content according to its own policies and your contract/tenant settings. Evaluate provider-side logging/retention as part of your deployment review.
-

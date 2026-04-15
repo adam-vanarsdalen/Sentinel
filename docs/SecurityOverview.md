@@ -51,7 +51,7 @@ This means:
 User passwords:
 - User passwords are stored as Argon2 password hashes (via Passlib).
 
-Provider credentials (OpenAI/Anthropic/Azure OpenAI):
+Provider credentials (OpenAI/Anthropic/Azure OpenAI/Ollama):
 - SentinelLaw now supports per-firm provider credentials in addition to the older global env-based development fallback.
 - Firm-scoped provider secrets are stored encrypted at rest in the database using an application-level master secret (`SENTINEL_SECRET_KEY`).
 - Provider config API responses never return stored secrets; the UI only receives masked status such as whether a secret is configured.

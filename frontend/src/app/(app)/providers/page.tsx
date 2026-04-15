@@ -52,7 +52,7 @@ type ProviderDescriptor = {
   defaultModelLabel: string;
 };
 
-const PROVIDER_ORDER: ProviderType[] = ["openai", "anthropic", "azure_openai"];
+const PROVIDER_ORDER: ProviderType[] = ["openai", "anthropic", "ollama", "azure_openai"];
 
 const PROVIDER_DETAILS: Record<ProviderType, ProviderDescriptor> = {
   openai: {
@@ -67,6 +67,12 @@ const PROVIDER_DETAILS: Record<ProviderType, ProviderDescriptor> = {
     help: "Useful if your team prefers Anthropic for longer-form review or drafting. Leave the API key blank after the first save to keep the existing key.",
     defaultModelLabel: "Default model",
   },
+  ollama: {
+    title: "Ollama",
+    summary: "Use an organization-managed Ollama host through its OpenAI-compatible API.",
+    help: "Recommended for local/private model hosting. Sentinel routes runtime requests through Ollama's /v1 API while retaining policy enforcement and audit logging.",
+    defaultModelLabel: "Default model",
+  },
   azure_openai: {
     title: "Azure OpenAI",
     summary: "Use your organization's Azure-hosted OpenAI deployments.",
@@ -78,6 +84,7 @@ const PROVIDER_DETAILS: Record<ProviderType, ProviderDescriptor> = {
 const FALLBACK_DEFAULTS: Record<ProviderType, string[]> = {
   openai: ["gpt-4.1-mini", "gpt-4.1"],
   anthropic: ["claude-sonnet-4-6", "claude-opus-4-6"],
+  ollama: ["gpt-oss:120b-cloud"],
   azure_openai: ["gpt-4o-prod", "gpt-4.1-review"],
 };
 
@@ -152,20 +159,22 @@ function buildForms(configs: ProviderConfig[] | undefined): Record<ProviderType,
   return {
     openai: formFromConfig(byProvider.get("openai"), "openai"),
     anthropic: formFromConfig(byProvider.get("anthropic"), "anthropic"),
+    ollama: formFromConfig(byProvider.get("ollama"), "ollama"),
     azure_openai: formFromConfig(byProvider.get("azure_openai"), "azure_openai"),
   };
 }
 
 function emptyErrors(): Record<ProviderType, Record<string, string>> {
-  return { openai: {}, anthropic: {}, azure_openai: {} };
+  return { openai: {}, anthropic: {}, ollama: {}, azure_openai: {} };
 }
 
 function emptyMessages(): Record<ProviderType, ProviderMessage | null> {
-  return { openai: null, anthropic: null, azure_openai: null };
+  return { openai: null, anthropic: null, ollama: null, azure_openai: null };
 }
 
 function configLooksConfigured(providerType: ProviderType, config: ProviderConfig | undefined): boolean {
   if (!config) return false;
+  if (providerType === "ollama") return true;
   if (providerType === "azure_openai" && String(config.config_json.auth_mode ?? "api_key") === "managed_identity") {
     return true;
   }
@@ -188,7 +197,7 @@ function validateForm(
     errors.api_key = "An API key is required the first time you connect this provider.";
   }
 
-  if (providerType === "openai" || providerType === "anthropic") {
+  if (providerType === "openai" || providerType === "anthropic" || providerType === "ollama") {
     if (form.default_model.trim() && allowlist.length > 0 && !allowlist.includes(form.default_model.trim())) {
       errors.default_model = "The default model must also appear in the approved model list.";
     }
@@ -242,7 +251,7 @@ function validateForm(
 function buildPayload(providerType: ProviderType, form: ProviderFormState) {
   const model_allowlist = parseAllowlist(form.model_allowlist_text);
 
-  if (providerType === "openai" || providerType === "anthropic") {
+  if (providerType === "openai" || providerType === "anthropic" || providerType === "ollama") {
     return {
       display_name: form.display_name.trim(),
       is_enabled: form.is_enabled,
@@ -366,9 +375,18 @@ export default function ProvidersPage() {
     return {
       openai: rows.find((row) => row.provider_type === "openai"),
       anthropic: rows.find((row) => row.provider_type === "anthropic"),
+      ollama: rows.find((row) => row.provider_type === "ollama"),
       azure_openai: rows.find((row) => row.provider_type === "azure_openai"),
     } as Record<ProviderType, ProviderConfig | undefined>;
   }, [providerConfigsQuery.data]);
+
+  const ollamaConfigId = configsByProvider.ollama?.id;
+  const ollamaModelsQuery = useQuery({
+    queryKey: ["providerDiscoveredModels", "ollama", ollamaConfigId],
+    queryFn: () => api.providerConfigs.listModels(ollamaConfigId!),
+    enabled: canManage && Boolean(ollamaConfigId),
+    staleTime: 30_000,
+  });
 
   const [forms, setForms] = React.useState<Record<ProviderType, ProviderFormState>>(() => buildForms(undefined));
   const [errorsByProvider, setErrorsByProvider] = React.useState<Record<ProviderType, Record<string, string>>>(() => emptyErrors());
@@ -468,6 +486,8 @@ export default function ProvidersPage() {
       const detail =
         error instanceof HttpError && error.retryable
           ? "The provider did not respond in time. Please try again in a few minutes."
+          : error instanceof HttpError && typeof error.detail === "string" && error.detail.trim().length > 0
+            ? error.detail
           : error instanceof Error
             ? error.message
             : "Unable to verify this provider right now.";
@@ -566,7 +586,7 @@ export default function ProvidersPage() {
       <div className="space-y-1">
         <h1 className="text-xl font-semibold">Provider Settings</h1>
         <p className="text-sm text-slate-600">
-          Manage your organization&apos;s OpenAI, Anthropic, and Azure OpenAI connections here. No CLI access or environment-file edits are needed.
+          Manage your organization&apos;s OpenAI, Anthropic, Ollama, and Azure OpenAI connections here. No CLI access or environment-file edits are needed.
         </p>
       </div>
 
@@ -667,20 +687,34 @@ export default function ProvidersPage() {
                         </div>
                       </div>
 
-                      {providerType === "openai" || providerType === "anthropic" ? (
+                      {providerType === "openai" || providerType === "anthropic" || providerType === "ollama" ? (
                         <>
                           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                             <div className="space-y-1">
-                              <div className="text-xs text-slate-600">API key</div>
+                              <div className="text-xs text-slate-600">
+                                {providerType === "ollama" ? "Ollama API key (optional)" : "API key"}
+                              </div>
                               <Input
                                 type="password"
                                 value={form.api_key}
                                 onChange={(e) => updateForm(providerType, { api_key: e.target.value })}
-                                placeholder={config?.secret_configured ? "Leave blank to keep the current key" : "Paste API key"}
+                                placeholder={
+                                  config?.secret_configured
+                                    ? "Leave blank to keep the current key"
+                                    : providerType === "ollama"
+                                      ? "Optional. Leave blank for local Ollama defaults."
+                                      : "Paste API key"
+                                }
                                 data-testid={`provider-api-key-${providerType}`}
                               />
                               <div className="text-xs text-slate-500">
-                                {config?.secret_configured ? "A key is already stored securely. Leave this blank to keep it." : `${appConfig.product.name} stores the key securely after save.`}
+                                {providerType === "ollama"
+                                  ? config?.secret_configured
+                                    ? "An override key is stored securely. Leave blank to keep it."
+                                    : "Optional for local Ollama. If omitted, Sentinel can use OLLAMA_API_KEY or a safe placeholder."
+                                  : config?.secret_configured
+                                    ? "A key is already stored securely. Leave this blank to keep it."
+                                    : `${appConfig.product.name} stores the key securely after save.`}
                               </div>
                               <FieldError error={errors.api_key} />
                             </div>
@@ -689,7 +723,13 @@ export default function ProvidersPage() {
                               <Input
                                 value={form.base_url}
                                 onChange={(e) => updateForm(providerType, { base_url: e.target.value })}
-                                placeholder={providerType === "openai" ? "https://api.openai.com/v1" : "https://api.anthropic.com"}
+                                placeholder={
+                                  providerType === "openai"
+                                    ? "https://api.openai.com/v1"
+                                    : providerType === "anthropic"
+                                      ? "https://api.anthropic.com"
+                                      : "http://localhost:11434/v1/"
+                                }
                                 data-testid={`provider-base-url-${providerType}`}
                               />
                             </div>
@@ -718,6 +758,28 @@ export default function ProvidersPage() {
                               <div className="text-xs text-slate-500">One model per line. Requests outside this list will be blocked.</div>
                             </div>
                           </div>
+                          {providerType === "ollama" ? (
+                            <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                              <div className="font-medium">Installed Ollama models (discovery)</div>
+                              <div className="mt-1 text-xs text-slate-600">
+                                Discovery uses Ollama native APIs (`/api/tags`). Detected models are informative only and are not auto-approved.
+                              </div>
+                              {ollamaModelsQuery.isLoading ? (
+                                <div className="mt-2 text-xs text-slate-500">Loading discovered models…</div>
+                              ) : ollamaModelsQuery.isError ? (
+                                <div className="mt-2 text-xs text-amber-700">Model discovery is currently unavailable. Verify Ollama host reachability.</div>
+                              ) : (
+                                <div className="mt-2 text-xs">
+                                  {(ollamaModelsQuery.data?.models ?? []).length > 0
+                                    ? (ollamaModelsQuery.data?.models ?? [])
+                                        .map((item) => item.id)
+                                        .slice(0, 8)
+                                        .join(", ")
+                                    : "No models reported by Ollama."}
+                                </div>
+                              )}
+                            </div>
+                          ) : null}
                         </>
                       ) : (
                         <>

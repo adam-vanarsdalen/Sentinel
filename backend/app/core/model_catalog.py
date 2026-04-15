@@ -10,6 +10,7 @@ class CatalogModel:
     display_name: str
     status: str = "active"
     aliases: tuple[str, ...] = ()
+    capabilities: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -42,11 +43,11 @@ PROVIDER_CATALOG: dict[str, CatalogProvider] = {
         supports_custom_models=False,
         enabled_by_default=True,
         models=(
-            CatalogModel(id="gpt-4.1-mini", display_name="GPT-4.1 mini"),
-            CatalogModel(id="gpt-4.1", display_name="GPT-4.1"),
-            CatalogModel(id="gpt-4o-mini", display_name="GPT-4o mini", status="legacy"),
-            CatalogModel(id="gpt-4o", display_name="GPT-4o", status="legacy"),
-            CatalogModel(id="gpt-4-turbo", display_name="GPT-4 Turbo", status="legacy"),
+            CatalogModel(id="gpt-4.1-mini", display_name="GPT-4.1 mini", capabilities=("chat", "tool_calling", "structured_output")),
+            CatalogModel(id="gpt-4.1", display_name="GPT-4.1", capabilities=("chat", "tool_calling", "structured_output")),
+            CatalogModel(id="gpt-4o-mini", display_name="GPT-4o mini", status="legacy", capabilities=("chat", "tool_calling")),
+            CatalogModel(id="gpt-4o", display_name="GPT-4o", status="legacy", capabilities=("chat", "tool_calling", "vision")),
+            CatalogModel(id="gpt-4-turbo", display_name="GPT-4 Turbo", status="legacy", capabilities=("chat", "tool_calling", "vision")),
         ),
         notes="Curated OpenAI model IDs used by Sentinel demos, tests, and operator workflows.",
     ),
@@ -57,12 +58,12 @@ PROVIDER_CATALOG: dict[str, CatalogProvider] = {
         supports_custom_models=False,
         enabled_by_default=False,
         models=(
-            CatalogModel(id="claude-sonnet-4-6", display_name="Claude Sonnet 4.6"),
-            CatalogModel(id="claude-opus-4-6", display_name="Claude Opus 4.6"),
-            CatalogModel(id="claude-3-5-sonnet-latest", display_name="Claude 3.5 Sonnet (latest)", status="legacy"),
-            CatalogModel(id="claude-sonnet-4-5", display_name="Claude Sonnet 4.5", status="legacy"),
-            CatalogModel(id="claude-opus-4", display_name="Claude Opus 4", status="legacy"),
-            CatalogModel(id="claude-3-haiku-20240307", display_name="Claude 3 Haiku (20240307)", status="legacy"),
+            CatalogModel(id="claude-sonnet-4-6", display_name="Claude Sonnet 4.6", capabilities=("chat", "tool_calling")),
+            CatalogModel(id="claude-opus-4-6", display_name="Claude Opus 4.6", capabilities=("chat", "tool_calling")),
+            CatalogModel(id="claude-3-5-sonnet-latest", display_name="Claude 3.5 Sonnet (latest)", status="legacy", capabilities=("chat", "tool_calling")),
+            CatalogModel(id="claude-sonnet-4-5", display_name="Claude Sonnet 4.5", status="legacy", capabilities=("chat", "tool_calling")),
+            CatalogModel(id="claude-opus-4", display_name="Claude Opus 4", status="legacy", capabilities=("chat", "tool_calling")),
+            CatalogModel(id="claude-3-haiku-20240307", display_name="Claude 3 Haiku (20240307)", status="legacy", capabilities=("chat",)),
         ),
         notes="Curated Anthropic model IDs currently used in Sentinel seeds/tests and compatibility paths.",
     ),
@@ -73,11 +74,26 @@ PROVIDER_CATALOG: dict[str, CatalogProvider] = {
         supports_custom_models=True,
         enabled_by_default=False,
         models=(
-            CatalogModel(id="care-gpt-4o-mini", display_name="care-gpt-4o-mini", status="example"),
-            CatalogModel(id="care-gpt-4.1-mini", display_name="care-gpt-4.1-mini", status="example"),
-            CatalogModel(id="gpt-4o-prod", display_name="gpt-4o-prod", status="example"),
+            CatalogModel(id="care-gpt-4o-mini", display_name="care-gpt-4o-mini", status="example", capabilities=("chat",)),
+            CatalogModel(id="care-gpt-4.1-mini", display_name="care-gpt-4.1-mini", status="example", capabilities=("chat",)),
+            CatalogModel(id="gpt-4o-prod", display_name="gpt-4o-prod", status="example", capabilities=("chat", "vision")),
         ),
         notes="`model` is treated as Azure deployment name; custom deployment IDs are allowed.",
+    ),
+    "ollama": CatalogProvider(
+        id="ollama",
+        display_name="Ollama",
+        default_model_field="default_model",
+        supports_custom_models=False,
+        enabled_by_default=False,
+        models=(
+            CatalogModel(
+                id="gpt-oss:120b-cloud",
+                display_name="GPT-OSS 120B Cloud",
+                capabilities=("chat", "tool_calling", "structured_output"),
+            ),
+        ),
+        notes="Runtime requests use Ollama's OpenAI-compatible /v1 API; metadata discovery uses native /api endpoints.",
     ),
 }
 
@@ -172,6 +188,7 @@ def catalog_payload(*, include_mock: bool = False) -> dict[str, Any]:
                         "display_name": model.display_name,
                         "status": model.status,
                         "aliases": list(model.aliases),
+                        "capabilities": list(model.capabilities),
                     }
                     for model in provider.models
                 ],

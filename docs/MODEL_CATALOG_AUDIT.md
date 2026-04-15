@@ -1,6 +1,6 @@
 # Model/Provider Catalog Audit
 
-Date: 2026-04-14
+Date: 2026-04-15
 
 ## Scope
 
@@ -16,6 +16,7 @@ Repo-wide audit across backend, frontend, preset seed data, tests, and docs for:
 - `openai`
 - `anthropic`
 - `azure_openai`
+- `ollama`
 - `mock` (internal/dev and test path)
 
 ## Model identifiers found before normalization
@@ -23,6 +24,7 @@ Repo-wide audit across backend, frontend, preset seed data, tests, and docs for:
 - OpenAI-family IDs: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo`
 - Anthropic-family IDs: `claude-sonnet-4-6`, `claude-sonnet-4-5`, `claude-opus-4-6`, `claude-opus-4`, `claude-3-5-sonnet-latest`, `claude-3-haiku-20240307`
 - Azure deployment-style IDs: `care-gpt-4o-mini`, `care-gpt-4.1-mini`, `gpt-4o-prod`, `gpt-4.1-review`
+- Ollama IDs: `gpt-oss:120b-cloud`
 - Internal/dev: `mock`
 
 ## Drift hotspots discovered
@@ -55,6 +57,7 @@ It defines:
 - `openai`: `gpt-4.1-mini`, `gpt-4.1`, `gpt-4o-mini` (legacy), `gpt-4o` (legacy), `gpt-4-turbo` (legacy)
 - `anthropic`: `claude-sonnet-4-6`, `claude-opus-4-6`, `claude-3-5-sonnet-latest` (legacy), `claude-sonnet-4-5` (legacy), `claude-opus-4` (legacy), `claude-3-haiku-20240307` (legacy)
 - `azure_openai`: deployment-name mode (`supports_custom_models=true`) with seeded examples: `care-gpt-4o-mini`, `care-gpt-4.1-mini`, `gpt-4o-prod`
+- `ollama`: `gpt-oss:120b-cloud` (default curated Ollama model for this repo)
 
 ## Key repo changes tied to this audit
 

@@ -54,6 +54,25 @@
         }
       },
       "secret_json": { "api_key": "demo-general-anthropic-key" }
+    },
+    {
+      "provider_type": "ollama",
+      "display_name": "Northwind Local Ollama",
+      "is_enabled": false,
+      "is_default": false,
+      "model_allowlist": ["gpt-oss:120b-cloud"],
+      "config_json": {
+        "base_url": "http://localhost:11434/v1/",
+        "default_model": "gpt-oss:120b-cloud",
+        "resilience": {
+          "connect_timeout_seconds": 5,
+          "read_timeout_seconds": 60,
+          "retry_count": 0,
+          "retryable_status_codes": [408, 429, 500, 502, 503, 504],
+          "retryable_error_classes": ["timeout", "connection", "rate_limit", "server_error"],
+          "fallback_enabled": false
+        }
+      }
     }
   ],
   "policy_versions": [

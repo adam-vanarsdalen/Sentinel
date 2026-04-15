@@ -25,7 +25,7 @@ from app.services.providers.base import (
 )
 
 
-ProviderType = Literal["openai", "anthropic", "azure_openai"]
+ProviderType = Literal["openai", "anthropic", "azure_openai", "ollama"]
 
 
 class ProviderPolicyError(Exception):
@@ -116,7 +116,8 @@ def normalize_resilience_config(value: dict | None, *, provider_type: str) -> di
     fallback_model = fallback_model_raw or None
     if fallback_enabled:
         if fallback_provider not in PROVIDER_TYPES:
-            raise ValueError("fallback_provider must be one of: openai, anthropic, azure_openai")
+            allowed = ", ".join(PROVIDER_TYPES)
+            raise ValueError(f"fallback_provider must be one of: {allowed}")
         if not fallback_model:
             raise ValueError("fallback_model is required when fallback is enabled")
         fallback_model = normalize_model_id(fallback_provider, fallback_model, allow_empty=False)
@@ -168,7 +169,7 @@ def _as_dict(value: dict | None) -> dict[str, Any]:
 
 def normalize_secret_json(provider_type: str, value: dict | None) -> dict[str, str]:
     raw = _as_dict(value)
-    if provider_type in {"openai", "anthropic", "azure_openai"}:
+    if provider_type in {"openai", "anthropic", "azure_openai", "ollama"}:
         api_key = str(raw.get("api_key") or "").strip()
         return {"api_key": api_key} if api_key else {}
     return {}
@@ -197,6 +198,19 @@ def normalize_config_json(provider_type: str, value: dict | None, *, model_allow
             out["base_url"] = base_url
         if default_model:
             out["default_model"] = default_model
+        out["resilience"] = resilience
+        return out
+
+    if provider_type == "ollama":
+        out = {}
+        base_url = str(raw.get("base_url") or "").strip()
+        default_model = normalize_model_id(provider_type, raw.get("default_model"), allow_empty=True)
+        api_key_env_var = str(raw.get("api_key_env_var") or "OLLAMA_API_KEY").strip() or "OLLAMA_API_KEY"
+        if base_url:
+            out["base_url"] = base_url
+        if default_model:
+            out["default_model"] = default_model
+        out["api_key_env_var"] = api_key_env_var
         out["resilience"] = resilience
         return out
 
@@ -346,6 +360,15 @@ def config_runtime_settings(row: TenantProviderConfig) -> dict[str, Any]:
         candidate = runtime_settings.get("api_key")
         if _is_placeholder_api_key(candidate) and (settings.azure_openai_api_key or "").strip():
             runtime_settings["api_key"] = settings.azure_openai_api_key
+    elif row.provider_type == "ollama":
+        candidate = runtime_settings.get("api_key")
+        if _is_placeholder_api_key(candidate):
+            if (settings.ollama_api_key or "").strip():
+                runtime_settings["api_key"] = settings.ollama_api_key
+            else:
+                runtime_settings["api_key"] = "ollama-placeholder"
+        if not str(runtime_settings.get("base_url") or "").strip():
+            runtime_settings["base_url"] = settings.ollama_base_url
     runtime_settings["model_allowlist"] = row.model_allowlist or []
     return runtime_settings
 
@@ -457,7 +480,18 @@ def resolve_gateway_provider(
                 provider=row.provider_type,
                 provider_config_id=row.id,
             )
-        resolved_model = normalize_model_id(row.provider_type, resolved_model, allow_empty=False)
+        try:
+            resolved_model = normalize_model_id(row.provider_type, resolved_model, allow_empty=False)
+        except ValueError as exc:
+            raise ProviderPolicyError(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+                action_type="MODEL_DENY",
+                reason_code="invalid_model",
+                provider=row.provider_type,
+                model=resolved_model,
+                provider_config_id=row.id,
+            ) from exc
         allowlist = catalog_normalize_model_allowlist(row.provider_type, row.model_allowlist or [])
         if allowlist and resolved_model not in allowlist:
             raise ProviderPolicyError(
@@ -492,7 +526,17 @@ def resolve_gateway_provider(
     else:
         fallback_model = str(model or "").strip()
         if fallback_model:
-            resolved_model = normalize_model_id(provider_name, fallback_model, allow_empty=False)
+            try:
+                resolved_model = normalize_model_id(provider_name, fallback_model, allow_empty=False)
+            except ValueError as exc:
+                raise ProviderPolicyError(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=str(exc),
+                    action_type="MODEL_DENY",
+                    reason_code="invalid_model",
+                    provider=provider_name,
+                    model=fallback_model,
+                ) from exc
         else:
             resolved_model = default_model_for_provider(provider_name) or "mock"
     return provider_name, resolved_model, {}, None

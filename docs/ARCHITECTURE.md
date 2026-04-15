@@ -18,7 +18,7 @@ Sentinel is a governance layer between enterprise applications and LLM providers
 - Public/browser boundary: user-facing UI and auth endpoints
 - Admin/API boundary: JWT-authenticated tenant and platform administration
 - Gateway boundary: API-key-authenticated machine-to-machine inference traffic
-- Provider boundary: outbound calls to approved model providers (OpenAI/Anthropic/Azure OpenAI/mock)
+- Provider boundary: outbound calls to approved model providers (OpenAI/Anthropic/Azure OpenAI/Ollama/mock)
 - Data boundary: tenant-scoped records in shared PostgreSQL
 
 ## Core request flow
@@ -39,7 +39,7 @@ Sentinel is a governance layer between enterprise applications and LLM providers
 
 ## Provider routing role
 
-Provider routing enforces tenant-approved provider/model controls and optional resilience settings (timeouts/retries/fallback) while maintaining audit traceability for each routing decision.
+Provider routing enforces tenant-approved provider/model controls and optional resilience settings (timeouts/retries/fallback) while maintaining audit traceability for each routing decision. Ollama runtime traffic uses its OpenAI-compatible `/v1` interface; provider metadata discovery uses native Ollama `/api` endpoints when requested.
 
 See supplemental doc: `docs/ProviderRouting.md`.
 

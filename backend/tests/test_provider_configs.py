@@ -222,7 +222,7 @@ def test_gateway_blocks_model_outside_provider_allowlist(client: TestClient, db_
             display_name="Firm OpenAI",
             is_enabled=True,
             is_default=True,
-            model_allowlist=["gpt-4.1"],
+            model_allowlist=["gpt-4.1-mini"],
             config_json={"default_model": "gpt-4.1"},
             encrypted_secret_blob="gAAAAABfake",
         )
@@ -480,3 +480,176 @@ def test_set_default_provider_config_writes_audit_event(client: TestClient, db_s
     )
     assert ev is not None
     assert ev.outcome == "success"
+
+
+def test_ollama_provider_config_accepts_empty_secret_and_discovers_models(client: TestClient, db_session: Session, monkeypatch):
+    from app.services.providers.ollama_provider import OllamaProvider
+
+    tenant = _mk_tenant(db_session, "t_ollama_cfg", "Tenant Ollama")
+    _mk_user(db_session, "admin_ollama", tenant.id, "admin-ollama@example.com", "pw12345!", "org_admin")
+    jwt = _login(client, "admin-ollama@example.com", "pw12345!")
+
+    created = client.post(
+        "/admin/provider-configs",
+        headers={"Authorization": f"Bearer {jwt}"},
+        json={
+            "provider_type": "ollama",
+            "display_name": "Ollama Local",
+            "is_enabled": True,
+            "is_default": True,
+            "model_allowlist": ["gpt-oss:120b-cloud"],
+            "config_json": {"base_url": "http://localhost:11434/v1/", "default_model": "gpt-oss:120b-cloud"},
+        },
+    )
+    assert created.status_code == 201, created.text
+    body = created.json()
+    assert body["provider_type"] == "ollama"
+    assert body["secret_configured"] is False
+    assert '"api_key":"' not in created.text
+
+    monkeypatch.setattr(
+        OllamaProvider,
+        "list_models",
+        lambda self, runtime_config=None: [{"id": "gpt-oss:120b-cloud", "family": "gpt-oss", "families": ["gpt-oss"]}],
+    )
+    discovered = client.get(f"/admin/provider-configs/{body['id']}/models", headers={"Authorization": f"Bearer {jwt}"})
+    assert discovered.status_code == 200, discovered.text
+    assert discovered.json()["provider_type"] == "ollama"
+    assert discovered.json()["models"][0]["id"] == "gpt-oss:120b-cloud"
+
+
+def test_ollama_connection_test_uses_catalog_default_model_when_not_configured(
+    client: TestClient, db_session: Session, monkeypatch
+):
+    from app.services.providers.ollama_provider import OllamaProvider
+
+    tenant = _mk_tenant(db_session, "t_ollama_default_test", "Tenant Ollama Default Test")
+    _mk_user(db_session, "admin_ollama_default", tenant.id, "admin-ollama-default@example.com", "pw12345!", "org_admin")
+    jwt = _login(client, "admin-ollama-default@example.com", "pw12345!")
+
+    created = client.post(
+        "/admin/provider-configs",
+        headers={"Authorization": f"Bearer {jwt}"},
+        json={
+            "provider_type": "ollama",
+            "display_name": "Ollama Local",
+            "is_enabled": True,
+            "is_default": True,
+            "model_allowlist": [],
+            "config_json": {"base_url": "http://localhost:11434/v1/"},
+        },
+    )
+    assert created.status_code == 201, created.text
+    provider_config_id = created.json()["id"]
+
+    def _fake_chat(
+        self,
+        *,
+        model: str,
+        messages: list[dict],
+        max_tokens: int | None,
+        temperature: float | None,
+        runtime_config: dict | None = None,
+    ) -> ProviderResponse:
+        assert model == "gpt-oss:120b-cloud"
+        return ProviderResponse(content="OK", raw={"ok": True}, prompt_tokens=1, completion_tokens=1)
+
+    monkeypatch.setattr(OllamaProvider, "chat_completions", _fake_chat)
+
+    tested = client.post(f"/admin/provider-configs/{provider_config_id}/test-connection", headers={"Authorization": f"Bearer {jwt}"})
+    assert tested.status_code == 200, tested.text
+    assert tested.json()["model"] == "gpt-oss:120b-cloud"
+
+
+def test_gateway_allows_ollama_allowed_model_and_blocks_disallowed(client: TestClient, db_session: Session, monkeypatch):
+    from app.services.providers.ollama_provider import OllamaProvider
+
+    tenant = _mk_tenant(db_session, "t_ollama_gateway", "Tenant Ollama Gateway")
+    token, api_key = create_api_key_token(tenant_id=tenant.id, name="ops-app")
+    db_session.add(api_key)
+    policy = dict(DEFAULT_POLICY)
+    policy["allowed_models"] = ["gpt-oss:120b-cloud"]
+    db_session.add(TenantPolicy(tenant_id=tenant.id, policy_json=policy))
+    db_session.add(
+        TenantProviderConfig(
+            id="pc_ollama",
+            tenant_id=tenant.id,
+            provider_type="ollama",
+            display_name="Ollama",
+            is_enabled=True,
+            is_default=True,
+            model_allowlist=["gpt-oss:120b-cloud"],
+            config_json={"default_model": "gpt-oss:120b-cloud", "base_url": "http://localhost:11434/v1/"},
+            encrypted_secret_blob="blob-ollama",
+        )
+    )
+    db_session.commit()
+
+    monkeypatch.setattr("app.services.provider_configs.secret_payload", lambda row: {})
+
+    def _fake_chat_completions(
+        self,
+        *,
+        model: str,
+        messages: list[dict],
+        max_tokens: int | None,
+        temperature: float | None,
+        runtime_config: dict | None = None,
+    ) -> ProviderResponse:
+        assert model == "gpt-oss:120b-cloud"
+        assert runtime_config is not None
+        return ProviderResponse(content="Ollama OK", raw={"ok": True}, prompt_tokens=3, completion_tokens=2)
+
+    monkeypatch.setattr(OllamaProvider, "chat_completions", _fake_chat_completions)
+
+    allowed = client.post(
+        "/v1/chat/completions",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"provider": "ollama", "model": "gpt-oss:120b-cloud", "messages": [{"role": "user", "content": "hello"}]},
+    )
+    assert allowed.status_code == 200, allowed.text
+    assert allowed.json()["model"] == "gpt-oss:120b-cloud"
+
+    blocked_policy = client.post(
+        "/v1/chat/completions",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"provider": "ollama", "model": "gpt-4.1", "messages": [{"role": "user", "content": "hello"}]},
+    )
+    assert blocked_policy.status_code == 400, blocked_policy.text
+    assert blocked_policy.json()["error"]["code"] == "POLICY_BLOCKED"
+    assert blocked_policy.json().get("reason_code") == "invalid_model"
+
+    blocked_provider = client.post(
+        "/v1/chat/completions",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"provider": "ollama", "model": "gpt-oss:120b-cloud:alt", "messages": [{"role": "user", "content": "hello"}]},
+    )
+    assert blocked_provider.status_code in {400, 403}, blocked_provider.text
+
+    latest = db_session.query(AuditEvent).filter(AuditEvent.tenant_id == tenant.id).order_by(AuditEvent.timestamp.desc()).first()
+    assert latest is not None
+    assert latest.provider == "ollama"
+
+
+def test_ollama_runtime_settings_use_env_fallback_without_exposing_secret(monkeypatch):
+    from app.core.config import settings
+    from app.services.provider_configs import config_runtime_settings
+
+    row = TenantProviderConfig(
+        id="pc_ollama_env",
+        tenant_id="tenant",
+        provider_type="ollama",
+        display_name="Ollama",
+        is_enabled=True,
+        is_default=False,
+        model_allowlist=["gpt-oss:120b-cloud"],
+        config_json={"default_model": "gpt-oss:120b-cloud"},
+        encrypted_secret_blob=None,
+    )
+    monkeypatch.setattr(settings, "ollama_api_key", "env-ollama-key")
+    monkeypatch.setattr(settings, "ollama_base_url", "http://localhost:11434/v1/")
+
+    runtime = config_runtime_settings(row)
+    assert runtime["api_key"] == "env-ollama-key"
+    assert runtime["base_url"] == "http://localhost:11434/v1/"
+    assert "secret" not in runtime

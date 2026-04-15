@@ -112,10 +112,11 @@ These endpoints are tenant-scoped and are intended for the organization administ
       - `supports_custom_models`
       - `enabled_by_default`
       - `notes`
-      - `models[]` with `{ id, display_name, status, aliases }`
+      - `models[]` with `{ id, display_name, status, aliases, capabilities }`
   - Notes:
     - This is the canonical provider/model source used by admin UI surfaces.
     - `azure_openai` uses deployment names and intentionally allows custom values.
+    - `ollama` runtime requests use OpenAI-compatible `/v1`; model discovery can be retrieved from native Ollama endpoints.
 
 - `GET /admin/provider-configs`
   - Auth: Bearer JWT, role `org_admin`
@@ -124,7 +125,7 @@ These endpoints are tenant-scoped and are intended for the organization administ
 - `POST /admin/provider-configs`
   - Auth: Bearer JWT, role `org_admin`
   - Body:
-    - `provider_type`: `openai | anthropic | azure_openai`
+    - `provider_type`: `openai | anthropic | azure_openai | ollama`
     - `display_name`: string
     - `is_enabled?`: boolean
     - `is_default?`: boolean
@@ -151,6 +152,12 @@ These endpoints are tenant-scoped and are intended for the organization administ
 - `POST /admin/provider-configs/{id}/test-connection`
   - Auth: Bearer JWT, role `org_admin`
   - Response: `{ ok: true, provider_type, model }`
+- `GET /admin/provider-configs/{id}/models`
+  - Auth: Bearer JWT, role `org_admin`
+  - Response: `{ provider_type, source, models[] }`
+  - Notes:
+    - Currently backed by provider-native discovery for `ollama` (`/api/tags`).
+    - Discovery output is informational; it does not bypass allowlists.
 - `POST /admin/provider-configs/{id}/set-default`
   - Auth: Bearer JWT, role `org_admin`
   - Response: masked provider config shape
@@ -171,7 +178,7 @@ These endpoints are tenant-scoped and are intended for the organization administ
 - `PUT /admin/provider-configs/policy`
   - Auth: Bearer JWT, role `org_admin`
   - Body:
-    - `default_provider?`: `openai | anthropic | azure_openai | null`
+    - `default_provider?`: `openai | anthropic | azure_openai | ollama | null`
     - `providers[]`:
       - `provider_type`
       - `is_enabled`
@@ -186,6 +193,8 @@ Provider-specific validation:
 - `openai`: API key required
 - `anthropic`: API key required
 - `azure_openai`: `config_json.endpoint` + `config_json.api_version` + (`config_json.default_deployment` or non-empty `model_allowlist`) + either API key or managed-identity metadata
+- `ollama`: supports optional API key (from provider config or `OLLAMA_API_KEY`); `config_json.base_url` defaults to `OLLAMA_BASE_URL` when omitted
+  - optional non-secret config: `config_json.api_key_env_var` (defaults to `OLLAMA_API_KEY`)
 - If a provider config has both an allowlist and a default model/deployment, the default must also appear in the allowlist.
 - `config_json.resilience.connect_timeout_seconds` must be between `0.5` and `120`.
 - `config_json.resilience.read_timeout_seconds` must be between `1` and `600`.
@@ -193,7 +202,7 @@ Provider-specific validation:
 - If fallback is enabled, both `fallback_provider` and `fallback_model` are required.
 
 UI notes:
-- The tenant-admin console presents one card each for OpenAI, Anthropic, and Azure OpenAI.
+- The tenant-admin console presents cards for OpenAI, Anthropic, Ollama, and Azure OpenAI.
 - Saved secrets are never shown back to the browser; the UI only indicates whether a secret is configured.
 - The recommended operator flow is “Save” or “Save and Test” directly from the provider card instead of editing environment variables.
 
@@ -441,7 +450,7 @@ Audit event fields (selected):
 - `POST /v1/chat/completions`
   - Auth: API key (`Authorization: Bearer sk_...`)
   - Body:
-    - `provider?`: optional `openai | anthropic | azure_openai`; if omitted, Sentinel uses the tenant’s default enabled provider config
+    - `provider?`: optional `openai | anthropic | azure_openai | ollama`; if omitted, Sentinel uses the tenant’s default enabled provider config
     - `model?`: optional model/deployment name; if omitted, Sentinel uses the approved provider’s default model/deployment when configured
   - Optional metadata (recommended): send in body as `{ metadata: { matter_id?, practice_group?, client_name?, data_classification?, purpose? } }`
     - `data_classification` is required by the `legal_strict_no_client_data_v1` template (allowed values: `PUBLIC`, `INTERNAL_NON_CLIENT`).
@@ -460,6 +469,7 @@ Audit event fields (selected):
     - `default_provider_required`
     - `model_not_approved`
     - `default_model_required`
+    - `invalid_model`
   - Provider runtime failures:
     - Provider timeouts return `error.code = "PROVIDER_TIMEOUT"` with `retryable = true`.
     - Other provider outages/auth failures return `error.code = "PROVIDER_UNAVAILABLE"`.

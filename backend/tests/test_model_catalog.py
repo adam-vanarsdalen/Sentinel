@@ -36,7 +36,7 @@ def _login(client: TestClient, email: str, password: str) -> str:
 
 
 def test_catalog_provider_types_are_curated():
-    assert PROVIDER_TYPES == ("openai", "anthropic", "azure_openai")
+    assert PROVIDER_TYPES == ("openai", "anthropic", "azure_openai", "ollama")
 
 
 def test_model_allowlist_normalization_is_provider_aware():
@@ -66,10 +66,12 @@ def test_provider_catalog_endpoint_returns_catalog_for_org_admin(client: TestCli
     body = response.json()
     assert "providers" in body
     provider_ids = {item["id"] for item in body["providers"]}
-    assert provider_ids == {"openai", "anthropic", "azure_openai"}
+    assert provider_ids == {"openai", "anthropic", "azure_openai", "ollama"}
     openai_models = [item["id"] for item in next(item for item in body["providers"] if item["id"] == "openai")["models"]]
     assert "gpt-4.1-mini" in openai_models
     assert "gpt-4.1" in openai_models
+    ollama_models = [item["id"] for item in next(item for item in body["providers"] if item["id"] == "ollama")["models"]]
+    assert "gpt-oss:120b-cloud" in ollama_models
 
 
 def test_eval_run_rejects_unknown_model(client: TestClient, db_session: Session):

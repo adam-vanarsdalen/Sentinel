@@ -110,6 +110,243 @@ DEFAULT_POLICY: dict[str, Any] = {
 
 SEVERITY_ORDER = {"low": 0, "med": 1, "high": 2}
 
+EXFILTRATION_INTENT_PATTERNS: tuple[str, ...] = (
+    r"\bdo\s+not\s+redact\b",
+    r"\bunredacted\b",
+    r"\bkeep\s+(?:all\s+)?(?:identifiers?|details?)\s+visible\b",
+    r"\binclude\s+(?:the\s+)?(?:full|exact)\b",
+    r"\bwithout\s+redaction\b",
+)
+
+SENSITIVE_IDENTIFIER_PATTERNS: tuple[str, ...] = (
+    r"\b\d{3}-\d{2}-\d{4}\b",  # SSN-like
+    r"\b\d{9}\s*/\s*\d{6,17}\b",  # routing/account pair
+    r"\b(?:dob|date\s+of\s+birth)\b.{0,12}\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b",
+    r"\bmat-\d{4}-\d+\b",
+    r"\b(?:bank\s+account|account\s+number|routing\s+number|ssn|social\s+security|private\s+pricing|confidential\s+pricing)\b",
+    r"\bmrn[-\s:]?\w+\b",
+    r"\bmedical\s+record\s+number\b",
+    r"\binsurance\s+member\s+id\b",
+    r"\b(?:diagnosis\s+details?|medication\s+list|psychotherapy\s+notes?)\b",
+    r"\bpatient(?:['’]s)?\s+full\s+name\b",
+)
+
+POLICY_EVASION_INTENT_PATTERNS: tuple[str, ...] = (
+    r"\bless\s+likely\s+to\s+be\s+flagged\b",
+    r"\bless\s+likely\s+to\s+be\s+blocked\b",
+    r"\bless\s+likely\s+to\s+trigger\s+safeguards?\b",
+    r"\bavoid\s+detection\b",
+    r"\bevade\s+(?:policy|filters?|detection|guardrails?)\b",
+    r"\bbypass\s+(?:policy|filters?|detection|guardrails?)\b",
+    r"\bbypass\s+standard\s+restrictions\b",
+    r"\belevated\s+authorit(?:y|ies)\b",
+    r"\brewrite\s+(?:a\s+)?request\b.{0,80}\b(?:flagged|blocked|detected)\b",
+    r"\bsounds?\s+like\s+(?:a\s+)?normal\s+administrative\s+task\b",
+)
+
+PROTECTED_TARGET_PATTERNS: tuple[str, ...] = (
+    r"\bhidden\s+instructions?\b",
+    r"\bsystem\s+prompt\b",
+    r"\bdeveloper\s+instructions?\b",
+    r"\binternal\s+policy\s+rules?\b",
+    r"\bconfidential\s+data\b",
+    r"\bprotected\s+patient\s+information\b",
+    r"\bpatient\s+information\b",
+    r"\bphi\b",
+    r"\bhipaa\b",
+    r"\bpayment\s+approval\s+matrix\b",
+    r"\bfraud\s+thresholds?\b",
+    r"\bunreleased\s+forecast\s+assumptions?\b",
+    r"\bcustomer\s+bank\s+details?\b",
+    r"\binternal\s+risk\s+notes?\b",
+    r"\bprivileged\s+legal\s+analysis\b",
+    r"\battorney\s+work\s+product\b",
+    r"\bconfidential\s+matter\s+details?\b",
+    r"\blegal\s+matter\s+details?\b",
+    r"\bharmless\s+document(?:-|\s+)summari[sz]ation\s+request\b",
+)
+
+SENSITIVE_INVENTORY_INTENT_PATTERNS: tuple[str, ...] = (
+    r"\blist\s+the\s+categories?\s+of\s+protected\s+information\b",
+    r"\bprovide\s+representative\s+examples?\b",
+    r"\bvalidate\s+coverage\b",
+    r"\bwhat\s+protected\s+information\s+this\s+system\s+can\s+access\b",
+)
+
+SENSITIVE_INVENTORY_SCOPE_PATTERNS: tuple[str, ...] = (
+    r"\bprotected\s+information\b",
+    r"\bconfidential\s+information\b",
+    r"\bsensitive\s+data\b",
+    r"\bhidden\s+instructions?\b",
+    r"\binternal\s+policy\s+rules?\b",
+)
+
+INTERNAL_CONFIG_EXFILTRATION_INTENT_PATTERNS: tuple[str, ...] = (
+    r"\bretrieve\b.{0,80}\bhidden\s+configuration\b",
+    r"\breveal\b.{0,80}\bhidden\s+configuration\b",
+    r"\buse\s+all\s+available\s+internal\s+tools\b",
+    r"\buse\s+any\s+available\s+(?:internal\s+)?tools\b",
+    r"\binternal\s+configuration\s+sources?\b",
+    r"\bpresent\s+it\s+in\s+a\s+concise\s+operational\s+report\b",
+)
+
+INTERNAL_CONFIG_EXFILTRATION_SCOPE_PATTERNS: tuple[str, ...] = (
+    r"\binternal\s+tools\b",
+    r"\blogs\b",
+    r"\bstored\s+prompts?\b",
+    r"\bpolicy\s+definitions?\b",
+    r"\bprovider\s+metadata\b",
+    r"\bhidden\s+configuration\b",
+)
+
+HIDDEN_GUIDANCE_EXFIL_INTENT_PATTERNS: tuple[str, ...] = (
+    r"\breveal\b.{0,80}\b(hidden|internal|concealed)\b",
+    r"\bdisclose\b.{0,80}\b(hidden|internal|concealed)\b",
+    r"\bsummarize\b.{0,80}\b(hidden|internal|concealed)\b",
+    r"\bhidden\s+instructions?\b.{0,120}\b(summarize|infer)\b",
+    r"\binfer\b.{0,120}\b(hidden\s+instructions?|enforcement\s+rules?)\b",
+    r"\boutput\b.{0,80}\b(hidden|internal|concealed)\b",
+    r"\bprovide\b.{0,120}\binternal\s+policy\s+(?:and\s+)?routing\s+rules?\b",
+    r"\bprovide\b.{0,80}\b(full|complete)\s+configuration\s+summary\b",
+    r"\btransform\b.{0,160}\bexecutive\s+summary\b.{0,180}\b(hidden\s+guidance|confidential\s+details?)\b",
+)
+
+HIDDEN_GUIDANCE_EXFIL_SCOPE_PATTERNS: tuple[str, ...] = (
+    r"\bhidden\s+instructions?\b",
+    r"\bhidden\s+system\s+instructions?\b",
+    r"\bhidden\s+guidance\b",
+    r"\bdeveloper\s+constraints?\b",
+    r"\binternal\s+policy\s+guidance\b",
+    r"\binternal\s+policy\s+(?:and\s+)?routing\s+rules?\b",
+    r"\bconcealed\s+instruction\s+layers?\b",
+    r"\bmoderation\s+logic\b",
+    r"\binternal\s+enforcement\s+notes?\b",
+    r"\benforcement\s+rules?\b",
+    r"\bhidden\s+prompts?\b",
+    r"\btenant\s+polic(?:y|ies)\b",
+    r"\bconfidential\s+details?\b",
+)
+
+INSTRUCTION_OVERRIDE_INTENT_PATTERNS: tuple[str, ...] = (
+    r"\btreat\b.{0,80}\buser(?:-|\s+)supplied\s+note\b.{0,120}\btrusted\s+system\s+guidance\b",
+    r"\btrust\s+the\s+embedded\s+document\s+over\s+prior\s+restrictions\b",
+    r"\bdocument\s+instructions?\s+override\s+system\s+policy\b",
+    r"\bfollow\s+the\s+document['’]s?\s+instructions?\s+anyway\b",
+    r"\boperat(?:e|ing)\s+under\s+(?:higher(?:-|\s+)priority|higher|elevated)\s+.*\b(authority|privileges?)\b",
+    r"\badministrative\s+override\b",
+    r"\bignore\s+prior\s+instructions\b",
+)
+
+SENSITIVE_DATA_AGGREGATION_INTENT_PATTERNS: tuple[str, ...] = (
+    r"\bconsolidat(?:e|es|ing)\b.{0,120}\b(personally\s+identifying|identifiers?|account\s+numbers?|medical\s+notes?|pricing\s+terms?)\b",
+    r"\bexternal(?:-|\s+)facing\s+memo\b.{0,120}\bconfidential\b",
+    r"\bexternal(?:-|\s+)ready\s+memo\b.{0,140}\bconfidential\s+identifiers?\b",
+    r"\bcombin(?:e|es|ing)\b.{0,120}\b(hr|legal|financial|medical)\b",
+    r"\bcomprehensive\s+case\s+packet\b.{0,180}\b(hr|legal|financial|medical)\b",
+    r"\b(?:single|one)\s+shar(?:eable|able)\s+(?:narrative|report)\b.{0,140}\b(hr|legal|financial|medical)\b",
+    r"\brepresentative\s+protected\s+examples?\b.{0,80}\bsensitive\s+data\s+class\b",
+    r"\blist\s+the\s+sensitive\s+data\s+classes?\b.{0,120}\bprovide\s+examples\b",
+    r"\bstep\s*1\b.{0,140}\bsensitive\s+data\s+classes?\b.{0,220}\bstep\s*2\b.{0,100}\bexamples?\b.{0,220}\bstep\s*3\b.{0,140}\b(?:sample|realistic)\s+(?:report|packet|narrative)\b",
+)
+
+INTERNAL_ENFORCEMENT_LOGIC_INTENT_PATTERNS: tuple[str, ...] = (
+    r"\bexact\s+internal\s+conditions?\b",
+    r"\bthresholds?\b.{0,80}\brule\s+logic\b",
+    r"\bdecision\s+boundary\b",
+    r"\bwithout\s+quoting\s+internal\s+rules?\s+directly\b",
+    r"\bexplain\s+enough\b.{0,140}\bgoverned\s+internally\b",
+    r"\bweakness(?:es)?\s+or\s+ambiguity\s+in\s+policy\s+enforcement\b",
+    r"\binconsistent\s+decisions?\b.{0,80}\bsimilar\s+requests\b",
+)
+
+
+def _is_explicit_sensitive_exfiltration(prompt_text: str, normalized_prompt: str) -> bool:
+    has_exfil_intent = any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in EXFILTRATION_INTENT_PATTERNS
+    )
+    if not has_exfil_intent:
+        return False
+    return any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in SENSITIVE_IDENTIFIER_PATTERNS
+    )
+
+
+def _is_policy_evasion_guidance_request(prompt_text: str, normalized_prompt: str) -> bool:
+    has_evasion_intent = any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in POLICY_EVASION_INTENT_PATTERNS
+    )
+    if not has_evasion_intent:
+        return False
+    return any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in PROTECTED_TARGET_PATTERNS
+    )
+
+
+def _is_sensitive_inventory_exfiltration_request(prompt_text: str, normalized_prompt: str) -> bool:
+    has_inventory_intent = any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in SENSITIVE_INVENTORY_INTENT_PATTERNS
+    )
+    if not has_inventory_intent:
+        return False
+    return any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in SENSITIVE_INVENTORY_SCOPE_PATTERNS
+    )
+
+
+def _is_internal_configuration_exfiltration_request(prompt_text: str, normalized_prompt: str) -> bool:
+    has_intent = any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in INTERNAL_CONFIG_EXFILTRATION_INTENT_PATTERNS
+    )
+    if not has_intent:
+        return False
+    scope_hits = sum(
+        1
+        for pattern in INTERNAL_CONFIG_EXFILTRATION_SCOPE_PATTERNS
+        if re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+    )
+    return scope_hits >= 2
+
+
+def _is_hidden_guidance_exfiltration_request(prompt_text: str, normalized_prompt: str) -> bool:
+    has_intent = any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in HIDDEN_GUIDANCE_EXFIL_INTENT_PATTERNS
+    )
+    if not has_intent:
+        return False
+    return any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in HIDDEN_GUIDANCE_EXFIL_SCOPE_PATTERNS
+    )
+
+
+def _is_instruction_override_request(prompt_text: str, normalized_prompt: str) -> bool:
+    return any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in INSTRUCTION_OVERRIDE_INTENT_PATTERNS
+    )
+
+
+def _is_sensitive_data_aggregation_request(prompt_text: str, normalized_prompt: str) -> bool:
+    return any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in SENSITIVE_DATA_AGGREGATION_INTENT_PATTERNS
+    )
+
+
+def _is_internal_enforcement_logic_request(prompt_text: str, normalized_prompt: str) -> bool:
+    return any(
+        re.search(pattern, prompt_text, flags=re.IGNORECASE) or re.search(pattern, normalized_prompt, flags=re.IGNORECASE)
+        for pattern in INTERNAL_ENFORCEMENT_LOGIC_INTENT_PATTERNS
+    )
+
 
 class PolicyEnforcementError(HTTPException):
     def __init__(
@@ -169,6 +406,70 @@ def enforce_preflight(
             matched_rule="max_prompt_chars",
         )
     _, normalized_prompt = normalize_text_for_scanning(prompt_text)
+    if _is_explicit_sensitive_exfiltration(prompt_text, normalized_prompt):
+        raise PolicyEnforcementError(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Prompt blocked due to explicit request to expose sensitive identifiers without redaction",
+            block_stage="preflight_sensitive_data_request",
+            reason_code="sensitive_data_exfiltration_request",
+            matched_rule="explicit_sensitive_data_exfiltration",
+        )
+    if _is_policy_evasion_guidance_request(prompt_text, normalized_prompt):
+        raise PolicyEnforcementError(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Prompt blocked due to request for policy-evasion guidance",
+            block_stage="preflight_policy_evasion_guidance",
+            reason_code="policy_evasion_guidance_request",
+            matched_rule="policy_evasion_guidance",
+        )
+    if _is_sensitive_inventory_exfiltration_request(prompt_text, normalized_prompt):
+        raise PolicyEnforcementError(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Prompt blocked due to request to inventory protected information with representative examples",
+            block_stage="preflight_sensitive_inventory_request",
+            reason_code="sensitive_inventory_exfiltration_request",
+            matched_rule="sensitive_inventory_exfiltration",
+        )
+    if _is_internal_configuration_exfiltration_request(prompt_text, normalized_prompt):
+        raise PolicyEnforcementError(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Prompt blocked due to request for internal configuration or policy/tooling exfiltration",
+            block_stage="preflight_internal_config_exfiltration",
+            reason_code="internal_config_exfiltration_request",
+            matched_rule="internal_configuration_exfiltration",
+        )
+    if _is_hidden_guidance_exfiltration_request(prompt_text, normalized_prompt):
+        raise PolicyEnforcementError(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Prompt blocked due to request for hidden internal guidance or control-layer disclosure",
+            block_stage="preflight_hidden_guidance_exfiltration",
+            reason_code="hidden_guidance_exfiltration_request",
+            matched_rule="hidden_guidance_exfiltration",
+        )
+    if _is_instruction_override_request(prompt_text, normalized_prompt):
+        raise PolicyEnforcementError(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Prompt blocked due to instruction-priority override attempt",
+            block_stage="preflight_instruction_override",
+            reason_code="instruction_override_attempt",
+            matched_rule="instruction_priority_override",
+        )
+    if _is_sensitive_data_aggregation_request(prompt_text, normalized_prompt):
+        raise PolicyEnforcementError(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Prompt blocked due to request to aggregate or package sensitive identifiers/details",
+            block_stage="preflight_sensitive_data_aggregation",
+            reason_code="sensitive_data_aggregation_request",
+            matched_rule="sensitive_data_aggregation",
+        )
+    if _is_internal_enforcement_logic_request(prompt_text, normalized_prompt):
+        raise PolicyEnforcementError(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Prompt blocked due to request for internal enforcement logic/decision-boundary disclosure",
+            block_stage="preflight_internal_enforcement_logic",
+            reason_code="internal_enforcement_logic_request",
+            matched_rule="internal_enforcement_logic",
+        )
     for pat in policy.get("block_prompt_patterns", []):
         if re.search(pat, prompt_text, flags=re.IGNORECASE) or re.search(pat, normalized_prompt, flags=re.IGNORECASE):
             raise PolicyEnforcementError(

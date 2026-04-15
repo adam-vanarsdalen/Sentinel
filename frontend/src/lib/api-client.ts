@@ -274,6 +274,24 @@ export const api = {
         z.object({ ok: z.boolean(), provider_type: z.string(), model: z.string() }),
         opts,
       ),
+    listModels: (id: string, opts?: RequestOptions) =>
+      getWithSchema(
+        `/admin/provider-configs/${id}/models`,
+        z.object({
+          provider_type: z.string(),
+          source: z.string(),
+          models: z.array(
+            z.object({
+              id: z.string(),
+              digest: z.string().nullable().optional(),
+              parameter_size: z.string().nullable().optional(),
+              family: z.string().nullable().optional(),
+              families: z.array(z.string()).default([]),
+            }),
+          ),
+        }),
+        opts,
+      ),
   },
   providerPolicy: {
     get: (opts?: RequestOptions): Promise<ProviderPolicy> =>

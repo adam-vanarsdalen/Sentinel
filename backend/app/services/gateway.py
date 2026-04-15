@@ -32,6 +32,7 @@ from app.services.providers.base import (
     DEFAULT_RETRYABLE_STATUS_CODES,
 )
 from app.services.providers.mock import MockProvider
+from app.services.providers.ollama_provider import OllamaProvider
 from app.services.providers.openai_provider import OpenAiProvider
 from app.services.security_flags import SecuritySignals, detect_security_signals
 
@@ -114,6 +115,8 @@ def _provider(name: str):
         return AzureOpenAiProvider()
     if name == "anthropic":
         return AnthropicProvider()
+    if name == "ollama":
+        return OllamaProvider()
     return MockProvider()
 
 

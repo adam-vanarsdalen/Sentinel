@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.deps import DbDep, require_role
-from app.core.model_catalog import catalog_payload, normalize_model_id
+from app.core.model_catalog import catalog_payload, default_model_for_provider, normalize_model_id
 from app.core.errors import ApiError, ProviderServiceError
 from app.db.models import TenantProviderConfig, User
 from app.services.audit_log import write_admin_audit_event
@@ -27,6 +27,7 @@ from app.services.provider_configs import (
 from app.services.policy_model_sync import reconcile_tenant_policy_rows
 from app.services.providers.anthropic_provider import AnthropicProvider
 from app.services.providers.azure_openai_provider import AzureOpenAiProvider
+from app.services.providers.ollama_provider import OllamaProvider
 from app.services.providers.openai_provider import OpenAiProvider
 
 
@@ -121,6 +122,7 @@ class ProviderCatalogModelResponse(BaseModel):
     display_name: str
     status: str
     aliases: list[str] = Field(default_factory=list)
+    capabilities: list[str] = Field(default_factory=list)
 
 
 class ProviderCatalogItemResponse(BaseModel):
@@ -137,6 +139,12 @@ class ProviderCatalogResponse(BaseModel):
     providers: list[ProviderCatalogItemResponse]
 
 
+class ProviderDiscoveredModelsResponse(BaseModel):
+    provider_type: str
+    models: list[dict[str, Any]] = Field(default_factory=list)
+    source: str = "provider_native"
+
+
 def _tenant_id_for(user: User) -> str:
     tenant_id = user.effective_tenant_id
     if not tenant_id:
@@ -151,6 +159,8 @@ def _provider_client(provider_type: str):
         return AnthropicProvider()
     if provider_type == "azure_openai":
         return AzureOpenAiProvider()
+    if provider_type == "ollama":
+        return OllamaProvider()
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid provider_type")
 
 
@@ -158,8 +168,18 @@ def _connection_test_model(row: TenantProviderConfig) -> str:
     config_json = row.config_json or {}
     model_allowlist = row.model_allowlist or []
     if row.provider_type == "azure_openai":
-        return str(config_json.get("default_deployment") or (model_allowlist[0] if model_allowlist else "")).strip()
-    return str(config_json.get("default_model") or (model_allowlist[0] if model_allowlist else "")).strip()
+        return str(
+            config_json.get("default_deployment")
+            or (model_allowlist[0] if model_allowlist else "")
+            or default_model_for_provider(row.provider_type)
+            or ""
+        ).strip()
+    return str(
+        config_json.get("default_model")
+        or (model_allowlist[0] if model_allowlist else "")
+        or default_model_for_provider(row.provider_type)
+        or ""
+    ).strip()
 
 
 def _audit_event_payload(row: TenantProviderConfig) -> dict[str, Any]:
@@ -512,3 +532,25 @@ def test_provider_config_connection(provider_config_id: str, db: DbDep, user: Pr
         event_data={**_audit_event_payload(row), "model": model},
     )
     return {"ok": True, "provider_type": row.provider_type, "model": model}
+
+
+@router.get("/{provider_config_id}/models", response_model=ProviderDiscoveredModelsResponse)
+def list_provider_discovered_models(provider_config_id: str, db: DbDep, user: ProviderConfigAdmin) -> ProviderDiscoveredModelsResponse:
+    tenant_id = _tenant_id_for(user)
+    row = get_provider_config_or_404(db, tenant_id=tenant_id, provider_config_id=provider_config_id)
+    provider = _provider_client(row.provider_type)
+    if not hasattr(provider, "list_models"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Provider does not support model discovery")
+
+    try:
+        models = provider.list_models(runtime_config=config_runtime_settings(row))  # type: ignore[attr-defined]
+    except ProviderServiceError as exc:
+        raise ApiError(
+            status_code=exc.status_code,
+            code=exc.code,
+            message="Provider model discovery failed.",
+            detail=exc.detail[:500],
+            retryable=exc.retryable,
+        ) from exc
+
+    return ProviderDiscoveredModelsResponse(provider_type=row.provider_type, models=models)
