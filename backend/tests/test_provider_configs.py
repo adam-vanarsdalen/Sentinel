@@ -294,6 +294,49 @@ def test_gateway_blocks_provider_outside_tenant_approvals(client: TestClient, db
     assert (ev.event_data or {}).get("metadata", {}).get("reason_code") == "provider_not_approved"
 
 
+def test_gateway_allows_explicit_mock_provider_in_non_production(client: TestClient, db_session: Session):
+    tenant = _mk_tenant(db_session, "t_mock_override", "Tenant Mock Override")
+    token, api_key = create_api_key_token(tenant_id=tenant.id, name="firm-app")
+    db_session.add(api_key)
+    policy = dict(DEFAULT_POLICY)
+    policy["allowed_models"] = ["mock", "gpt-4.1"]
+    db_session.add(TenantPolicy(tenant_id=tenant.id, policy_json=policy))
+    db_session.add(
+        TenantProviderConfig(
+            id="pc_openai_for_mock_override",
+            tenant_id=tenant.id,
+            provider_type="openai",
+            display_name="Firm OpenAI",
+            is_enabled=True,
+            is_default=True,
+            model_allowlist=["gpt-4.1"],
+            config_json={"default_model": "gpt-4.1"},
+            encrypted_secret_blob="gAAAAABfake",
+        )
+    )
+    db_session.commit()
+
+    r = client.post(
+        "/v1/chat/completions",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "provider": "mock",
+            "model": "mock",
+            "messages": [{"role": "user", "content": "hello"}],
+            "max_tokens": 32,
+        },
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["model"] == "mock"
+    assert "[mock:mock]" in body["choices"][0]["message"]["content"]
+
+    ev = db_session.query(AuditEvent).filter(AuditEvent.tenant_id == tenant.id).order_by(AuditEvent.timestamp.desc()).first()
+    assert ev is not None
+    assert ev.provider == "mock"
+    assert ev.model == "mock"
+
+
 def test_tenant_b_policy_changes_do_not_affect_tenant_a(client: TestClient, db_session: Session, monkeypatch):
     from app.services.providers.openai_provider import OpenAiProvider
 

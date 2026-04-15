@@ -15,6 +15,10 @@ If the UI requires additional endpoints, they will be added minimally and docume
   - Note: For `super_admin`, a tenant context can be selected by sending `X-Tenant-Id: <tenant_uuid>`.
   - Note: Responses include `X-Request-Id` header for correlation.
 
+Role terminology note:
+- Canonical roles are `org_admin`, `compliance_admin`, `operator`, `reviewer`, `auditor`, and `super_admin`.
+- Legacy role aliases (`tenant_admin`, `developer`, `viewer`) are still accepted and normalized server-side for backward compatibility.
+
 ## Error Envelope
 
 Sentinel API failures use a consistent error shape:
@@ -95,7 +99,7 @@ These endpoints are for platform-wide tenant/organization administration. They d
   - Body: `{ "name": string }`
   - Response: `{ api_key: {...}, token: "sk_..." }` (secret shown once)
 - `POST /admin/api-keys/{api_key_id}/revoke`
-  - Auth: Bearer JWT, role `tenant_admin` or `super_admin`
+  - Auth: Bearer JWT, role `org_admin` or `super_admin`
   - Response: `{ id, name, key_prefix, is_active, created_at, revoked_at }`
 
 ## Provider Settings
@@ -202,7 +206,7 @@ Provider-specific validation:
 - If fallback is enabled, both `fallback_provider` and `fallback_model` are required.
 
 UI notes:
-- The tenant-admin console presents cards for OpenAI, Anthropic, Ollama, and Azure OpenAI.
+- The org-admin console presents cards for OpenAI, Anthropic, Ollama, and Azure OpenAI.
 - Saved secrets are never shown back to the browser; the UI only indicates whether a secret is configured.
 - The recommended operator flow is “Save” or “Save and Test” directly from the provider card instead of editing environment variables.
 
@@ -221,7 +225,7 @@ Provider resilience notes:
 These endpoints are tenant-scoped and are intended for the organization administrator role.
 
 - `GET /admin/alerts/current`
-  - Auth: Bearer JWT, role `tenant_admin`
+  - Auth: Bearer JWT, role `org_admin`
   - Response: `{ tenant_id, alerts, updated_at, updated_by_user_id }`
   - `alerts` shape:
     - `phi_threshold`
@@ -235,7 +239,7 @@ These endpoints are tenant-scoped and are intended for the organization administ
     - `throttle_window_minutes`
     - `provider_failure_threshold`
 - `PUT /admin/alerts/current`
-  - Auth: Bearer JWT, role `tenant_admin`
+  - Auth: Bearer JWT, role `org_admin`
   - Body:
     - `phi_threshold`
     - `severity_threshold`
@@ -250,13 +254,13 @@ These endpoints are tenant-scoped and are intended for the organization administ
     - Webhook URLs are stored in protected form and are never returned to the browser after save.
     - Saving this endpoint writes an audit event with `action_type = "ALERT_SETTINGS_UPDATED"`.
 - `GET /admin/alerts/history?limit=20`
-  - Auth: Bearer JWT, role `tenant_admin`
+  - Auth: Bearer JWT, role `org_admin`
   - Response: array of `{ id, timestamp, status, trigger_type, severity, channel, destination, request_id, reason }`
   - Notes:
     - History is derived from tenant-scoped audit events with `action_type = "ALERT_SENT"` and `ALERT_FAILED`.
     - Only the current tenant’s alert deliveries are returned.
 - `POST /admin/alerts/test`
-  - Auth: Bearer JWT, role `tenant_admin`
+  - Auth: Bearer JWT, role `org_admin`
   - Response: `{ ok, results }`
   - `results[]` shape: `{ channel, destination, status, error? }`
 
@@ -278,7 +282,7 @@ Alert delivery notes:
   - Auth: Bearer JWT
   - Response: `{ tenant_id, policy_json, updated_at, updated_by_user_id, active_version_id }`
 - `PUT /admin/policy/current`
-  - Auth: Bearer JWT, role `tenant_admin` or `super_admin`
+  - Auth: Bearer JWT, role `org_admin` or `super_admin`
   - Body: `{ "policy_json": {...}, "change_note"?: string, "source_template_id"?: string }`
   - Response: `{ tenant_id, policy_json, updated_at, updated_by_user_id, active_version_id }`
   - Each successful publish creates a new immutable policy version and marks it active.
@@ -304,11 +308,11 @@ Alert delivery notes:
   - Auth: Bearer JWT
   - Response: `{ id, name, description, policy_json }`
 - `POST /admin/policy/test`
-  - Auth: Bearer JWT, role `tenant_admin`/`super_admin`/`developer`
+  - Auth: Bearer JWT, role `org_admin`/`super_admin`/`operator`
   - Body: `{ "policy_json": {...} }`
   - Response: `{ "ok": true }` if policy validates
 - `POST /admin/policy/dry-run`
-  - Auth: Bearer JWT, role `tenant_admin`/`super_admin`/`developer`
+  - Auth: Bearer JWT, role `org_admin`/`super_admin`/`operator`
   - Body: `{ policy_json, model, messages, response_text?, metadata? }`
   - Response: `{ outcome: "ALLOW"|"BLOCK", block_reason?, flags, phi, confidentiality_exposure_level, security, output, effective_messages }`
   - `security` includes:
@@ -323,7 +327,7 @@ Alert delivery notes:
   - Auth: Bearer JWT
   - Response: `{ id, tenant_id, created_at, created_by_user_id, created_by_email, change_note, summary, active, source_template_id, source_version_id, policy_json }`
 - `POST /admin/policy/rollback/{id}`
-  - Auth: Bearer JWT, role `tenant_admin` or `super_admin`
+  - Auth: Bearer JWT, role `org_admin` or `super_admin`
   - Response: `{ tenant_id, policy_json, updated_at, updated_by_user_id, active_version_id }`
   - Creates a new active version from the selected historical version without mutating the original row.
   - Audit events written:
@@ -378,7 +382,7 @@ Audit event fields (selected):
 ## Audit Integrity
 
 - `GET /audit/integrity/verify?from=&to=&tenant_id=`
-  - Auth: Bearer JWT (`super_admin`, `tenant_admin`, or `auditor`)
+  - Auth: Bearer JWT (`super_admin`, `org_admin`, or `auditor`)
   - Query:
     - `from` optional datetime
     - `to` optional datetime
@@ -405,7 +409,7 @@ Audit event fields (selected):
   - Auth: Bearer JWT
   - Response: seeded eval test cases for the tenant
 - `POST /admin/evals/run`
-  - Auth: Bearer JWT (`developer`+)
+  - Auth: Bearer JWT (`operator`+)
   - Body: `{ "provider": string, "model": string }`
   - Response: `{ "run_id": string, "status": string }`
 - `GET /admin/evals/runs`
@@ -421,7 +425,7 @@ Audit event fields (selected):
   - Auth: Bearer JWT
   - Response: `{ tenant_id, settings_json, updated_at, updated_by_user_id }`
 - `PUT /admin/settings/current`
-  - Auth: Bearer JWT (`tenant_admin`+)
+  - Auth: Bearer JWT (`org_admin`+)
   - Body: `{ settings_json }`
   - Response: `{ tenant_id, settings_json, updated_at, updated_by_user_id }`
   - Note: operational alert recipients, delivery channels, and alert history now live under `/admin/alerts/*`.
@@ -433,15 +437,15 @@ Audit event fields (selected):
   - Note: Tenant-scoped. For `super_admin`, organization context is required (send `X-Tenant-Id`).
   - Response: array of `{ id, email, role, tenant_id, is_active, created_at }`
 - `POST /admin/users`
-  - Auth: Bearer JWT (`tenant_admin`+)
+  - Auth: Bearer JWT (`org_admin`+)
   - Body: `{ email, role, tenant_id? }`
   - Response: `{ user, temp_password }` (pilot)
 - `PUT /admin/users/{user_id}/role`
-  - Auth: Bearer JWT (`tenant_admin`+)
+  - Auth: Bearer JWT (`org_admin`+)
   - Body: `{ role }`
   - Response: updated user
 - `DELETE /admin/users/{user_id}`
-  - Auth: Bearer JWT (`tenant_admin`+)
+  - Auth: Bearer JWT (`org_admin`+)
   - Response: updated user
   - Note: Soft-delete (deactivates the user) to preserve audit trails.
 

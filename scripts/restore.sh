@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 /path/to/sentinellaw-postgres-<timestamp>.dump" >&2
+  echo "Usage: $0 /path/to/sentinel-postgres-<timestamp>.dump" >&2
   exit 1
 fi
 

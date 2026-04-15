@@ -1,6 +1,6 @@
 # Audit Integrity
 
-SentinelLaw’s audit trail is designed to be append-only and independently verifiable.
+Sentinel’s audit trail is designed to be append-only and independently verifiable.
 
 ## What changed
 
@@ -9,11 +9,11 @@ SentinelLaw’s audit trail is designed to be append-only and independently veri
   - `event_hash`
 - New audit rows are hash-chained per tenant.
 - Normal application paths cannot update or delete existing audit rows.
-- SentinelLaw exposes an integrity verification endpoint to detect tampering.
+- Sentinel exposes an integrity verification endpoint to detect tampering.
 
 ## Append-only protections
 
-SentinelLaw enforces append-only behavior in two layers:
+Sentinel enforces append-only behavior in two layers:
 
 1. Application/ORM layer
    - SQLAlchemy session hooks reject updates and deletes of `AuditEvent` rows.
@@ -29,7 +29,7 @@ Important note:
 
 ## Hash chain design
 
-For each tenant, SentinelLaw computes:
+For each tenant, Sentinel computes:
 
 `event_hash = SHA256(previous_event_hash + canonical_event_payload)`
 
@@ -67,7 +67,7 @@ Response:
 Behavior:
 - Verification runs in tenant scope.
 - If a row has been altered after insertion, chain verification should fail at the first broken event.
-- SentinelLaw logs verification activity as `AUDIT_VERIFY_RUN`.
+- Sentinel logs verification activity as `AUDIT_VERIFY_RUN`.
 
 ## Export behavior
 
@@ -75,4 +75,4 @@ Sentinel JSON exports now include:
 - `previous_event_hash`
 - `event_hash`
 
-CSV exports also include the same fields so downstream reviewers can retain integrity metadata outside SentinelLaw.
+CSV exports also include the same fields so downstream reviewers can retain integrity metadata outside Sentinel.

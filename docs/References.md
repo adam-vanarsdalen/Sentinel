@@ -1,6 +1,6 @@
 # References (Primary Sources)
 
-These references ground SentinelLaw’s pilot design choices and documentation.
+These references ground Sentinel’s pilot design choices and documentation.
 
 ## OWASP (GenAI / LLM Security)
 - OWASP Top 10 for Large Language Model Applications (LLM Top 10) — threat categories and mitigations for LLM apps (project home / latest).  

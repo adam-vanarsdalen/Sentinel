@@ -4,7 +4,7 @@ This document is written for security reviewers evaluating Sentinel. It describe
 
 ## Authentication and session handling (UI)
 
-SentinelLaw uses a JWT-based session for the admin UI:
+Sentinel uses a JWT-based session for the admin UI:
 
 1) A user signs in via `POST /auth/login` (email + password).
 2) The backend validates the password hash and returns a signed JWT (`access_token`).
@@ -21,12 +21,16 @@ Cookie properties (frontend):
 
 ## Authorization model and tenant context
 
-SentinelLaw uses role-based access control (RBAC) for admin actions. Relevant firm roles are:
+Sentinel uses role-based access control (RBAC) for admin actions. Canonical organization roles are:
 
-- `tenant_admin`: manages users, policies, settings, and API keys within the firm.
+- `org_admin`: manages users, policies, settings, and API keys within the organization.
+- `compliance_admin`: manages governance rules, alerts, and oversight settings.
+- `operator`: manages integrations, API keys, and operational testing.
 - `auditor`: reads logs and exports audit reports.
-- `developer`: reads logs and runs tests; can create API keys for integration in the pilot.
-- `viewer`: read-only access to dashboards/logs/policies.
+- `reviewer`: read-only access to dashboards/logs/policies.
+
+Backward compatibility:
+- Legacy aliases (`tenant_admin`, `developer`, `viewer`) are still accepted and normalized to `org_admin`, `operator`, and `reviewer`.
 
 Tenant context:
 - Most admin endpoints are tenant-scoped and require a firm context.
@@ -34,7 +38,7 @@ Tenant context:
 
 ## Gateway API keys (machine-to-machine) and how they are stored
 
-Client applications call the gateway endpoint `POST /v1/chat/completions` using a SentinelLaw gateway API key token (format `sk_<prefix>_<secret>`).
+Client applications call the gateway endpoint `POST /v1/chat/completions` using a Sentinel gateway API key token (format `sk_<prefix>_<secret>`).
 
 How keys are stored:
 - The plaintext token is **shown once** at creation time.
@@ -52,18 +56,18 @@ User passwords:
 - User passwords are stored as Argon2 password hashes (via Passlib).
 
 Provider credentials (OpenAI/Anthropic/Azure OpenAI/Ollama):
-- SentinelLaw now supports per-firm provider credentials in addition to the older global env-based development fallback.
-- Firm-scoped provider secrets are stored encrypted at rest in the database using an application-level master secret (`SENTINEL_SECRET_KEY`).
+- Sentinel now supports per-organization provider credentials in addition to the older global env-based development fallback.
+- Organization-scoped provider secrets are stored encrypted at rest in the database using an application-level master secret (`SENTINEL_SECRET_KEY`).
 - Provider config API responses never return stored secrets; the UI only receives masked status such as whether a secret is configured.
-- Global env provider keys remain supported only as a development fallback when a firm has no provider config.
+- Global env provider keys remain supported only as a development fallback when an organization has no provider config.
 
 ## Tenant isolation model (data segregation)
 
-SentinelLaw uses logical isolation in a shared database:
+Sentinel uses logical isolation in a shared database:
 - Core data tables (including `audit_events`) have a `tenant_id` foreign key.
-- Firm-scoped provider configs are stored in a tenant-bound table and always looked up by `tenant_id`.
+- Organization-scoped provider configs are stored in a tenant-bound table and always looked up by `tenant_id`.
 - Admin queries filter by `tenant_id` before returning results.
-- Gateway audit events are written with the request’s firm `tenant_id`.
+- Gateway audit events are written with the request’s organization `tenant_id`.
 
 This is appropriate for multi-tenant logical isolation. If your firm requires physical isolation (separate database per tenant), that is an architectural deployment change.
 
@@ -90,7 +94,7 @@ Important limitation:
 
 ## Rate limiting and DoS protection
 
-SentinelLaw includes multiple layers intended to mitigate unbounded consumption (ThreatModel: LLM10):
+Sentinel includes multiple layers intended to mitigate unbounded consumption (ThreatModel: LLM10):
 
 1) Policy-based request bounds (preflight):
    - `max_prompt_chars` enforces maximum prompt size.
@@ -110,14 +114,14 @@ Redis availability behavior:
 
 What is captured:
 - The audit trail is described in `docs/DataHandling.md` and `docs/LoggingAndRetention.md`.
-- For each gateway request and certain admin actions, SentinelLaw writes an `audit_events` record including tenant/actor identifiers, outcome/reason, provider/model, risk flags/scores, token counts/cost, and SHA-256 hashes of prompt/response text.
+- For each gateway request and certain admin actions, Sentinel writes an `audit_events` record including tenant/actor identifiers, outcome/reason, provider/model, risk flags/scores, token counts/cost, and SHA-256 hashes of prompt/response text.
 - Raw prompt/response text is **not stored by default**.
-- Optional: redacted snippets can be enabled by firm policy (`logging.store_redacted_snippets = true`).
+- Optional: redacted snippets can be enabled by organization policy (`logging.store_redacted_snippets = true`).
 
 Integrity and tamper-resistance (current pilot posture):
-- SentinelLaw writes audit events server-side at request time and includes a request correlation ID (`request_id` / `X-Request-Id`).
+- Sentinel writes audit events server-side at request time and includes a request correlation ID (`request_id` / `X-Request-Id`).
 - The application does not provide an API workflow to delete/purge audit events.
-- SentinelLaw now enforces append-only behavior for `audit_events` at the ORM/session layer and, in PostgreSQL deployments, installs database triggers that reject `UPDATE` and `DELETE`.
+- Sentinel now enforces append-only behavior for `audit_events` at the ORM/session layer and, in PostgreSQL deployments, installs database triggers that reject `UPDATE` and `DELETE`.
 - Audit events can be hash-chained per tenant using `previous_event_hash` and `event_hash`, and the chain can be checked through the integrity verification endpoint.
 - The database is still the source of truth; a sufficiently privileged database administrator could still tamper by disabling protections or altering schema-level controls.
 
@@ -136,8 +140,8 @@ Transport security (HTTPS):
 Secret handling:
 - Provide secrets via environment variables (not in source control).
 - Rotate secrets on a regular schedule (JWT signing secret and provider API keys).
-- Store gateway API key tokens only in a secret manager; they cannot be recovered from SentinelLaw later.
-- Set `SENTINEL_SECRET_KEY` in production; without it SentinelLaw will reject startup because it cannot safely encrypt stored provider credentials.
+- Store gateway API key tokens only in a secret manager; they cannot be recovered from Sentinel later.
+- Set `SENTINEL_SECRET_KEY` in production; without it Sentinel will reject startup because it cannot safely encrypt stored provider credentials.
 
 Data minimization defaults:
 - Keep raw prompt/response storage disabled unless explicitly required and approved.
@@ -145,9 +149,9 @@ Data minimization defaults:
 - Apply a documented database retention policy appropriate to your firm’s requirements.
 
 Access control:
-- Minimize the number of `tenant_admin` users.
+- Minimize the number of `org_admin` users.
 - Grant `auditor` only to users responsible for compliance/review workflows.
-- Use `developer` for integration/testing tasks; do not grant export rights unless necessary.
+- Use `operator` for integration/testing tasks; do not grant export rights unless necessary.
 
 Monitoring:
 - Alert on `PROMPT_INJECTION_SUSPECTED`, `EMBEDDED_INJECTION_SUSPECTED`, `SENSITIVE_REQUEST`, and `DOS_RISK` flags.

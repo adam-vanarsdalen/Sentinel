@@ -21,5 +21,5 @@ Reference: see `docs/References.md` (FHIR R4 AuditEvent).
 ## Notes / non-goals (pilot)
 
 - Not full conformance: this export is *not* guaranteed to validate against all FHIR profiles.
-- No subject identity mapping by default: SentinelLaw does not ingest client identifiers and does not create FHIR `Patient` references.
+- No subject identity mapping by default: Sentinel does not ingest client identifiers and does not create FHIR `Patient` references.
 - Consider adding `OperationOutcome` containment for failed operations if Sentinel becomes a FHIR API gateway (see FHIR guidance).

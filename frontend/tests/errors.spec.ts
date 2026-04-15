@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const email = process.env.E2E_EMAIL || "tenant-admin@example.com";
+const email = process.env.E2E_EMAIL || "admin@demoorg.com";
 const password = process.env.E2E_PASSWORD || "ChangeMe!12345";
 
 test("404 page renders custom not-found state", async ({ page }) => {

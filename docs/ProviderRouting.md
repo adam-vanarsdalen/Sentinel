@@ -1,12 +1,12 @@
-# SentinelLaw Provider Routing
+# Sentinel Provider Routing
 
-This document describes how SentinelLaw chooses a provider and model for a tenant-scoped gateway request, and how the new resilience controls behave.
+This document describes how Sentinel chooses a provider and model for a tenant-scoped gateway request, and how the resilience controls behave.
 
 ## Routing order
 
 For `POST /v1/chat/completions`:
 
-1. SentinelLaw resolves the tenant from the presented API key.
+1. Sentinel resolves the tenant from the presented API key.
 2. If the tenant has provider-config rows:
    - only enabled provider configs are considered approved
    - the tenant default provider is used when the request omits `provider`
@@ -43,22 +43,22 @@ Current behavior:
 
 Audit events:
 - `PROVIDER_TIMEOUT`: written for each timed-out provider attempt
-- `PROVIDER_RETRY`: written when SentinelLaw schedules another attempt after a transient failure
+- `PROVIDER_RETRY`: written when Sentinel schedules another attempt after a transient failure
 
 ## Fallback policy
 
 Fallback is opt-in and conservative.
 
-SentinelLaw will only attempt fallback when:
+Sentinel will only attempt fallback when:
 - the active provider config explicitly enables fallback
 - a `fallback_provider` and `fallback_model` are configured
 - the fallback target is still approved and enabled for the same tenant
 - the fallback target passes the same provider/model approval rules as any direct request
 
-SentinelLaw will not silently switch providers when fallback is disabled.
+Sentinel will not silently switch providers when fallback is disabled.
 
 Audit events:
-- `PROVIDER_FALLBACK_USED`: written when SentinelLaw switches from the primary target to the configured fallback target
+- `PROVIDER_FALLBACK_USED`: written when Sentinel switches from the primary target to the configured fallback target
 - `PROVIDER_FALLBACK_DENIED`: written when fallback was configured but the fallback target is not allowed for the tenant or is otherwise invalid
 
 ## Final request audit trail
@@ -100,4 +100,4 @@ Example attempt history:
 
 - Fallback is never an implicit “best effort” load-balancing feature.
 - A tenant must approve the fallback provider/model explicitly before it can be used.
-- If the configured fallback target is not allowed, SentinelLaw records `PROVIDER_FALLBACK_DENIED` and fails the request instead of routing to an alternate provider anyway.
+- If the configured fallback target is not allowed, Sentinel records `PROVIDER_FALLBACK_DENIED` and fails the request instead of routing to an alternate provider anyway.

@@ -1,15 +1,15 @@
 # Logging & Retention (Pilot Defaults)
 
-This document summarizes what SentinelLaw logs, what is intentionally *not* logged by default, and recommended retention/handling practices aligned to NIST SP 800-92 guidance (see `docs/References.md`).
+This document summarizes what Sentinel logs, what is intentionally *not* logged by default, and recommended retention/handling practices aligned to NIST SP 800-92 guidance (see `docs/References.md`).
 
 ## Logging goals
 - Support defensible AI activity logging for legal environments (who/what/when/outcome).
 - Enable governance metrics (volume, model usage, estimated cost).
 - Generate security signals (confidential-data risk, prompt injection cues) without storing raw content by default.
 
-## What SentinelLaw logs (pilot)
+## What Sentinel logs (pilot)
 
-For each LLM request or admin action, SentinelLaw writes an immutable `audit_events` row including:
+For each LLM request or admin action, Sentinel writes an immutable `audit_events` row including:
 - `tenant_id`, `api_key_id`, optional `user_id`
 - timestamp, action type, outcome + reason
 - model/provider
@@ -30,9 +30,9 @@ Recommended starting point for pilot deployments:
 - Online searchable retention: 30–90 days (operational monitoring)
 - Archive retention: 1–6 years depending on organizational policy and regulatory needs
 
-SentinelLaw does not hard-code retention; you should implement DB-level retention/archival procedures appropriate for your environment.
+Sentinel does not hard-code retention; you should implement DB-level retention/archival procedures appropriate for your environment.
 
 ## Protection & access
-- Restrict access to audit exports by role (`auditor` / `tenant_admin` / `super_admin`).
+- Restrict access to audit exports by role (`auditor` / `org_admin` / `super_admin`).
 - Treat audit logs as sensitive data (potential sensitive client data in redacted snippets if enabled).
 - Prefer centralization and integrity controls (append-only storage, backups, access logging).

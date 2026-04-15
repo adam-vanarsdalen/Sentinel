@@ -417,10 +417,11 @@ def resolve_gateway_provider(
     model: str | None,
 ) -> tuple[str, str, dict[str, Any], TenantProviderConfig | None]:
     requested_raw = (requested_provider or "").strip().lower() or None
+    env = (settings.environment or "").strip().lower()
     requested: str | None = None
     if requested_raw:
         try:
-            requested = normalize_provider_id(requested_raw, allow_mock=False)
+            requested = normalize_provider_id(requested_raw, allow_mock=env != "production")
         except ValueError as exc:
             raise ProviderPolicyError(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -430,6 +431,20 @@ def resolve_gateway_provider(
                 provider=requested_raw,
                 model=(model or "").strip() or None,
             ) from exc
+    if requested == "mock":
+        resolved_model = str(model or "").strip() or "mock"
+        try:
+            resolved_model = normalize_model_id("mock", resolved_model, allow_empty=False)
+        except ValueError as exc:
+            raise ProviderPolicyError(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+                action_type="MODEL_DENY",
+                reason_code="invalid_model",
+                provider="mock",
+                model=resolved_model,
+            ) from exc
+        return "mock", resolved_model, {}, None
     rows = db.query(TenantProviderConfig).filter(TenantProviderConfig.tenant_id == tenant_id).all()
     enabled_rows = [row for row in rows if row.is_enabled]
     rows_by_provider = {row.provider_type: row for row in enabled_rows}
@@ -505,7 +520,6 @@ def resolve_gateway_provider(
             )
         return row.provider_type, resolved_model, config_runtime_settings(row), row
 
-    env = (settings.environment or "").strip().lower()
     if env == "production":
         raise ProviderPolicyError(
             status_code=status.HTTP_403_FORBIDDEN,

@@ -1,6 +1,6 @@
-# SentinelLaw Deployment Runbook (Docker Compose / VPS)
+# Sentinel Deployment Runbook (Docker Compose / VPS)
 
-This runbook is for SentinelLaw pilot deployments on a single VPS or a small number of VPS instances using Docker Compose. It assumes the existing repo artifacts remain the source of truth:
+This runbook is for Sentinel pilot deployments on a single VPS or a small number of VPS instances using Docker Compose. It assumes the existing repo artifacts remain the source of truth:
 
 - `docker-compose.prod.yml`
 - `.env.production.template`
@@ -59,7 +59,7 @@ Persistent state today:
 - Caddy data/config volumes for certificate state
 
 Current pilot note:
-- SentinelLaw does not store uploaded client documents as a separate file store in this repo.
+- Sentinel does not store uploaded client documents as a separate file store in this repo.
 - Audit exports are generated on demand; they are not persisted as durable artifacts by default.
 
 ## 3) DNS Setup
@@ -293,8 +293,8 @@ COMPOSE_ENV_FILE=.env.production ./scripts/backup.sh
 ```
 
 Output:
-- `backups/sentinellaw-postgres-<timestamp>.dump`
-- `backups/sentinellaw-backup-<timestamp>.txt`
+- `backups/sentinel-postgres-<timestamp>.dump`
+- `backups/sentinel-backup-<timestamp>.txt`
 
 ### Backup retention guidance
 
@@ -318,7 +318,7 @@ Warning:
 Run:
 
 ```bash
-COMPOSE_ENV_FILE=.env.production ./scripts/restore.sh ./backups/sentinellaw-postgres-<timestamp>.dump
+COMPOSE_ENV_FILE=.env.production ./scripts/restore.sh ./backups/sentinel-postgres-<timestamp>.dump
 ```
 
 What the restore script does:
@@ -395,7 +395,7 @@ COMPOSE_ENV_FILE=.env.production ./deploy.sh
 If the failed deployment changed data/schema incompatibly, restore the pre-upgrade Postgres backup:
 
 ```bash
-COMPOSE_ENV_FILE=.env.production ./scripts/restore.sh ./backups/sentinellaw-postgres-<pre-upgrade-timestamp>.dump
+COMPOSE_ENV_FILE=.env.production ./scripts/restore.sh ./backups/sentinel-postgres-<pre-upgrade-timestamp>.dump
 ```
 
 Important:

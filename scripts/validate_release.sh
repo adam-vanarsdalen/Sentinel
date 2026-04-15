@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 ARTIFACTS_DIR="${ARTIFACTS_DIR:-$ROOT_DIR/artifacts/validate-release}"
 BACKEND_PORT="${BACKEND_PORT:-18000}"
 FRONTEND_PORT="${FRONTEND_PORT:-13000}"
-COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-sentinellaw_validate}"
+COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-sentinel_validate}"
 PLAYWRIGHT_IMAGE="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.50.1-noble}"
 
 resolve_version() {
@@ -23,7 +23,7 @@ resolve_version() {
 }
 
 APP_VERSION="$(resolve_version)"
-ENV_FILE="$(mktemp /tmp/sentinellaw-validate-env.XXXXXX)"
+ENV_FILE="$(mktemp /tmp/sentinel-validate-env.XXXXXX)"
 COMPOSE_CMD=(docker compose --env-file "$ENV_FILE" -p "$COMPOSE_PROJECT_NAME")
 
 cleanup() {
@@ -64,11 +64,35 @@ echo "==> Waiting for backend and frontend"
 wait_for_http "http://localhost:$BACKEND_PORT/ready" "Backend readiness"
 wait_for_http "http://localhost:$FRONTEND_PORT/login" "Frontend login page"
 
+# Source of truth for validation credentials:
+# - DEMO_TENANT_ADMIN_* and DEMO_SUPER_ADMIN_* in .env.example / runtime env
+SMOKE_ADMIN_EMAIL="${DEMO_TENANT_ADMIN_EMAIL:-admin@demoorg.com}"
+SMOKE_ADMIN_PASSWORD="${DEMO_TENANT_ADMIN_PASSWORD:-ChangeMe!12345}"
+SMOKE_ADMIN_FALLBACK_EMAILS="${SMOKE_ADMIN_FALLBACK_EMAILS:-admin@northwind.example,platform-admin@example.com}"
+E2E_SUPERADMIN_EMAIL="${DEMO_SUPER_ADMIN_EMAIL:-platform-admin@example.com}"
+E2E_SUPERADMIN_PASSWORD="${DEMO_SUPER_ADMIN_PASSWORD:-ChangeMe!12345}"
+
+echo "==> Seeding demo data for validation"
+"${COMPOSE_CMD[@]}" run --rm --no-deps backend python -m app.scripts.seed_demo
+
+echo "==> Ensuring deterministic super admin credentials for validation"
+"${COMPOSE_CMD[@]}" run --rm --no-deps \
+  -e BOOTSTRAP_ADMIN_EMAIL="$E2E_SUPERADMIN_EMAIL" \
+  -e BOOTSTRAP_ADMIN_PASSWORD="$E2E_SUPERADMIN_PASSWORD" \
+  backend python -m app.scripts.bootstrap_admin
+
+echo "==> Ensuring deterministic org admin credentials for validation"
+"${COMPOSE_CMD[@]}" run --rm --no-deps \
+  -e BOOTSTRAP_TENANT_ADMIN_EMAIL="$SMOKE_ADMIN_EMAIL" \
+  -e BOOTSTRAP_TENANT_ADMIN_PASSWORD="$SMOKE_ADMIN_PASSWORD" \
+  backend python -m app.scripts.bootstrap_tenant_admin
+
 echo "==> Docker Compose smoke boot check"
 API_BASE_URL="http://localhost:$BACKEND_PORT" \
 PUBLIC_BASE_URL="http://localhost:$FRONTEND_PORT" \
-SMOKE_ADMIN_EMAIL="tenant-admin@example.com" \
-SMOKE_ADMIN_PASSWORD="ChangeMe!12345" \
+SMOKE_ADMIN_EMAIL="$SMOKE_ADMIN_EMAIL" \
+SMOKE_ADMIN_PASSWORD="$SMOKE_ADMIN_PASSWORD" \
+SMOKE_ADMIN_FALLBACK_EMAILS="$SMOKE_ADMIN_FALLBACK_EMAILS" \
   ./scripts/smoke-test.sh
 
 echo "==> Backend tests"
@@ -91,10 +115,10 @@ docker run --rm \
   -e npm_config_cache=/tmp/playwright-home/npm-cache \
   -e PLAYWRIGHT_BASE_URL="http://frontend:3000" \
   -e E2E_BACKEND_BASE_URL="http://backend:8000" \
-  -e E2E_EMAIL="tenant-admin@example.com" \
-  -e E2E_PASSWORD="ChangeMe!12345" \
-  -e E2E_SUPERADMIN_EMAIL="platform-admin@example.com" \
-  -e E2E_SUPERADMIN_PASSWORD="ChangeMe!12345" \
+  -e E2E_EMAIL="$SMOKE_ADMIN_EMAIL" \
+  -e E2E_PASSWORD="$SMOKE_ADMIN_PASSWORD" \
+  -e E2E_SUPERADMIN_EMAIL="$E2E_SUPERADMIN_EMAIL" \
+  -e E2E_SUPERADMIN_PASSWORD="$E2E_SUPERADMIN_PASSWORD" \
   -e PLAYWRIGHT_REPORT_DIR="../artifacts/validate-release/playwright-report" \
   -e PLAYWRIGHT_TEST_RESULTS_DIR="../artifacts/validate-release/playwright-results" \
   -v "$ROOT_DIR:/repo" \

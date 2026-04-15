@@ -1,8 +1,8 @@
-# SentinelLaw Troubleshooting
+# Sentinel Troubleshooting
 
 ## Read the error envelope
 
-SentinelLaw API failures now use this structure:
+Sentinel API failures now use this structure:
 
 ```json
 {
@@ -30,14 +30,14 @@ Use the fields this way:
 - Meaning: the user session or API key is missing, invalid, revoked, or expired.
 - What to do:
   - Sign in again.
-  - For API traffic, confirm the current SentinelLaw API key is being sent.
+  - For API traffic, confirm the current Sentinel API key is being sent.
 
 ### `FORBIDDEN`
 - Meaning: the authenticated user does not have the required role.
 - What to do:
   - Confirm you are in the right account.
   - Confirm your role includes the requested action.
-  - In the UI, SentinelLaw redirects forbidden routes to the `/forbidden` page.
+  - In the UI, Sentinel redirects forbidden routes to the `/forbidden` page.
 
 ### `TENANT_SCOPE_ERROR`
 - Meaning: a firm-scoped action was attempted without valid firm context.
@@ -56,11 +56,11 @@ Use the fields this way:
     - no default provider/model configured when omitted by the client
 
 ### `PROVIDER_TIMEOUT`
-- Meaning: the upstream AI provider did not respond before SentinelLaw’s timeout.
+- Meaning: the upstream AI provider did not respond before Sentinel’s timeout.
 - What to do:
   - Retry later.
   - Check provider status and network connectivity.
-  - Use `request_id` to correlate SentinelLaw logs.
+  - Use `request_id` to correlate Sentinel logs.
 
 ### `PROVIDER_UNAVAILABLE`
 - Meaning: the upstream provider rejected or failed the request.
@@ -70,7 +70,7 @@ Use the fields this way:
   - If `retryable = false`, treat it as a configuration/authentication problem first.
 
 ### `EXPORT_FAILED`
-- Meaning: SentinelLaw could not generate the requested export.
+- Meaning: Sentinel could not generate the requested export.
 - What to do:
   - Retry the export.
   - Narrow filters if the result set is very large.
@@ -83,7 +83,7 @@ Use the fields this way:
   - For gateway calls, confirm `messages`, `provider`, `model`, and metadata are valid.
 
 ### `INTERNAL_ERROR`
-- Meaning: SentinelLaw hit an unexpected server-side failure.
+- Meaning: Sentinel hit an unexpected server-side failure.
 - What to do:
   - Retry once if appropriate.
   - Capture the `request_id`.
@@ -91,7 +91,7 @@ Use the fields this way:
 
 ## Frontend-specific notes
 
-- SentinelLaw no longer shows raw stack traces in normal page UX.
+- Sentinel no longer shows raw stack traces in normal page UX.
 - Missing routes render a custom 404 page.
 - Forbidden routes redirect to a 403 page.
 - Retryable provider failures show safe retry guidance in the Provider Settings UI.
@@ -99,7 +99,7 @@ Use the fields this way:
 ## Alerting-specific checks
 
 ### Test alert says delivery failed
-- Meaning: SentinelLaw accepted the test request, but at least one alert channel could not deliver.
+- Meaning: Sentinel accepted the test request, but at least one alert channel could not deliver.
 - What to check:
   - For email:
     - confirm `SMTP_HOST` is set
@@ -109,7 +109,7 @@ Use the fields this way:
   - For webhooks:
     - confirm the stored webhook was saved successfully
     - confirm the target system accepts the selected webhook format (`generic`, `slack`, or `teams`)
-    - confirm outbound network access from the SentinelLaw host
+    - confirm outbound network access from the Sentinel host
   - Review the current firm’s recent alert history on the **Alerts** page.
 
 ### Expected alerts are not arriving
@@ -122,7 +122,7 @@ Use the fields this way:
   - Search the audit trail for `ALERT_SENT` and `ALERT_FAILED` actions for the same time range.
 
 ### Repeated provider failures are not alerting
-- Meaning: SentinelLaw only alerts after the same provider fails enough times inside the configured window.
+- Meaning: Sentinel only alerts after the same provider fails enough times inside the configured window.
 - What to check:
   - Confirm **Repeated provider failures** is enabled.
   - Confirm the provider failure threshold is low enough for the current incident volume.

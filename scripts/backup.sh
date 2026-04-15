@@ -29,8 +29,8 @@ fi
 : "${POSTGRES_DB:?POSTGRES_DB must be set}"
 
 mkdir -p "$BACKUP_DIR"
-BACKUP_FILE="$BACKUP_DIR/sentinellaw-postgres-$TIMESTAMP.dump"
-MANIFEST_FILE="$BACKUP_DIR/sentinellaw-backup-$TIMESTAMP.txt"
+BACKUP_FILE="$BACKUP_DIR/sentinel-postgres-$TIMESTAMP.dump"
+MANIFEST_FILE="$BACKUP_DIR/sentinel-backup-$TIMESTAMP.txt"
 
 echo "Creating Postgres backup: $BACKUP_FILE"
 "${compose_cmd[@]}" exec -T postgres pg_dump \

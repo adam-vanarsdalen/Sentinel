@@ -22,6 +22,8 @@ Expected outcomes:
 - frontend lint/build pass
 - smoke checks pass
 - compose boot checks pass
+- validation login path uses `DEMO_TENANT_ADMIN_EMAIL` / `DEMO_TENANT_ADMIN_PASSWORD` (with `.env.example` defaults)
+- validation script deterministically bootstraps both org-admin and super-admin credentials before smoke/E2E checks
 
 ## 3. Deployment checks
 
