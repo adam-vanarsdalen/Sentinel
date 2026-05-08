@@ -48,7 +48,7 @@ def _create_gateway_setup(db_session: Session) -> tuple[str, str]:
             is_default=True,
             model_allowlist=["gpt-4.1", "gpt-4.1-mini"],
             config_json={"default_model": "gpt-4.1"},
-            encrypted_secret_blob=encrypt_json({"api_key": "test-openai-key"}),
+            encrypted_secret_blob=encrypt_json({"api_key": "__TEST_PROVIDER_SECRET__"}),
         )
     )
     db_session.commit()

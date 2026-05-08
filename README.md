@@ -55,7 +55,7 @@ Repository layout:
 - `frontend/`: Next.js admin console
 - `config/presets/`: preset manifests, terminology, demo organizations, role labels, and risk taxonomy
 - `docs/`: public technical documentation
-- `assets/`: diagrams, screenshots, and demo media placeholders
+- `assets/`: diagrams, screenshots, and demo media
 
 See [Architecture](docs/ARCHITECTURE.md) for request flow, trust boundaries, and component details.
 

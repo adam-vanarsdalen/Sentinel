@@ -239,7 +239,7 @@ def test_provider_timeout_retry_path_is_audited(client: TestClient, db_session: 
                     "fallback_enabled": False,
                 },
             },
-            encrypted_secret_blob=encrypt_json({"api_key": "tenant-openai-key"}),
+            encrypted_secret_blob=encrypt_json({"api_key": "__TEST_PROVIDER_SECRET__"}),
         )
     )
     db_session.commit()
@@ -313,7 +313,7 @@ def test_provider_fallback_success_is_audited_and_final_provider_is_recorded(cli
                     "fallback_model": "claude-sonnet-4-6",
                 },
             },
-            encrypted_secret_blob=encrypt_json({"api_key": "tenant-openai-key"}),
+            encrypted_secret_blob=encrypt_json({"api_key": "__TEST_PROVIDER_SECRET__"}),
         )
     )
     db_session.add(
@@ -326,7 +326,7 @@ def test_provider_fallback_success_is_audited_and_final_provider_is_recorded(cli
             is_default=False,
             model_allowlist=["claude-sonnet-4-6"],
             config_json={"default_model": "claude-sonnet-4-6"},
-            encrypted_secret_blob=encrypt_json({"api_key": "tenant-anthropic-key"}),
+            encrypted_secret_blob=encrypt_json({"api_key": "__TEST_PROVIDER_SECRET__"}),
         )
     )
     db_session.commit()
@@ -410,7 +410,7 @@ def test_provider_fallback_denied_when_target_not_approved(client: TestClient, d
                     "fallback_model": "claude-sonnet-4-6",
                 },
             },
-            encrypted_secret_blob=encrypt_json({"api_key": "tenant-openai-key"}),
+            encrypted_secret_blob=encrypt_json({"api_key": "__TEST_PROVIDER_SECRET__"}),
         )
     )
     db_session.commit()

@@ -44,12 +44,12 @@ SentinelLaw is designed to minimize stored content by default:
 
 See [`../DataHandling.md`](../DataHandling.md) for the full data handling description and defaults.
 
-## 6) Post‑pilot path and pricing (placeholder)
+## 6) Post-pilot path and pricing
 
 If the firm chooses to continue after the 60‑day pilot:
 
-- Target commercial pricing: **$X/month per firm after trial**.
-- Exact pricing and plan details will be discussed and agreed **before the pilot ends**.
+- Commercial pricing and plan details will be documented separately.
+- Any post-pilot subscription requires written agreement before the pilot ends.
 
 ## 7) Signatures
 

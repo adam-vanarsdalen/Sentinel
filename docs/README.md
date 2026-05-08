@@ -1,6 +1,6 @@
 # Sentinel Documentation
 
-This directory contains public technical documentation for Sentinel. Internal planning, release-prep, and red-team notes are kept under `docs/internal/` so the public docs remain focused.
+This directory contains public technical documentation for Sentinel.
 
 ## Start here
 
@@ -40,7 +40,3 @@ This directory contains public technical documentation for Sentinel. Internal pl
 - [SentinelLaw Legal Preset](legal-preset/README.md)
 - [SentinelLaw Policy](Policies/SentinelLawPolicy.md)
 - [SentinelLaw Policy Templates](Policies/SentinelLawPolicyTemplates.md)
-
-## Internal records
-
-- [Internal Documentation Index](internal/README.md)

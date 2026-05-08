@@ -27,7 +27,9 @@ Production checklist:
 
 - set strong `JWT_SECRET`
 - set `SENTINEL_SECRET_KEY`
+- set `METRICS_TOKEN` and configure metrics scrapers to send `X-Metrics-Token`
 - set `SEED_DEMO=0`
+- set `PROVIDER_DEFAULT` to a real provider, not `mock`
 - use managed secrets (not committed files)
 - terminate TLS at ingress/reverse proxy
 - restrict network access to backend and data services
@@ -63,6 +65,5 @@ NEXT_PUBLIC_SENTINEL_PRESET=legal
 
 ## References
 
-- `docs/internal/publication/RELEASE_CHECKLIST.md`
 - `docs/Troubleshooting.md`
 - `docs/DeploymentRunbook.md` (supplemental runbook detail)

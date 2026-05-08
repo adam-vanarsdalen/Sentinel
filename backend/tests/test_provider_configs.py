@@ -142,7 +142,7 @@ def test_gateway_uses_tenant_default_provider_config(client: TestClient, db_sess
         return ProviderResponse(content="Firm provider response", raw={"ok": True}, prompt_tokens=4, completion_tokens=3)
 
     monkeypatch.setattr(OpenAiProvider, "chat_completions", _fake_chat_completions)
-    monkeypatch.setattr("app.services.provider_configs.secret_payload", lambda row: {"api_key": "tenant-openai-key"})
+    monkeypatch.setattr("app.services.provider_configs.secret_payload", lambda row: {"api_key": "__TEST_PROVIDER_SECRET__"})
 
     r = client.post(
         "/v1/chat/completions",
@@ -196,7 +196,7 @@ def test_gateway_uses_default_model_when_request_omits_model(client: TestClient,
         return ProviderResponse(content="Default model response", raw={"ok": True}, prompt_tokens=4, completion_tokens=3)
 
     monkeypatch.setattr(OpenAiProvider, "chat_completions", _fake_chat_completions)
-    monkeypatch.setattr("app.services.provider_configs.secret_payload", lambda row: {"api_key": "tenant-openai-key"})
+    monkeypatch.setattr("app.services.provider_configs.secret_payload", lambda row: {"api_key": "__TEST_PROVIDER_SECRET__"})
 
     r = client.post(
         "/v1/chat/completions",
@@ -392,7 +392,7 @@ def test_tenant_b_policy_changes_do_not_affect_tenant_a(client: TestClient, db_s
         return ProviderResponse(content=f"ok:{model}", raw={"ok": True}, prompt_tokens=3, completion_tokens=2)
 
     monkeypatch.setattr(OpenAiProvider, "chat_completions", _fake_chat_completions)
-    monkeypatch.setattr("app.services.provider_configs.secret_payload", lambda row: {"api_key": "tenant-openai-key"})
+    monkeypatch.setattr("app.services.provider_configs.secret_payload", lambda row: {"api_key": "__TEST_PROVIDER_SECRET__"})
 
     blocked = client.post(
         "/v1/chat/completions",

@@ -29,7 +29,7 @@ Repo-wide audit across backend, frontend, preset seed data, tests, and docs for:
 
 ## Drift hotspots discovered
 
-- Provider config UI placeholders and examples had hardcoded model strings separate from seed data.
+- Provider config UI examples had hardcoded model strings separate from seed data.
 - Evaluations UI used a static provider/model map not sourced from backend config.
 - Policy “simple mode” allowed-model checkboxes used a static hardcoded list.
 - Backend provider-policy/model allowlist normalization was duplicated and not provider-aware.
