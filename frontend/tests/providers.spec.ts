@@ -6,8 +6,8 @@ const superAdminEmail = process.env.E2E_SUPERADMIN_EMAIL || "platform-admin@exam
 const superAdminPassword = process.env.E2E_SUPERADMIN_PASSWORD || "ChangeMe!12345";
 
 test("tenant admin can save provider configs, keep secrets masked, and change the default provider", async ({ page }) => {
-  const openAiSecret = `sk-openai-${Date.now()}`;
-  const anthropicSecret = `anthropic-${Date.now()}`;
+  const openAiSecret = `provider-test-secret-openai-${Date.now()}`;
+  const anthropicSecret = `provider-test-secret-anthropic-${Date.now()}`;
 
   await page.goto("/login");
   await page.getByLabel("Email").fill(tenantAdminEmail);

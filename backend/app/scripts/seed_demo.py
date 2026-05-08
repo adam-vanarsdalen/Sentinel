@@ -40,6 +40,7 @@ SEED_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "sentinel.demo.seed.v1")
 LEGAL_COMPAT_ADMIN_EMAIL = "admin@demolaw.com"
 LEGAL_COMPAT_API_KEY_NAME = "demo-contract-review"
 GENERAL_COMPAT_API_KEY_NAME = "demo-operations-app"
+GENERATED_ON_SEED_PLACEHOLDER = "__GENERATED_ON_SEED__"
 
 
 def _getenv_bool(name: str, default: str = "0") -> bool:
@@ -153,7 +154,7 @@ def _api_key_specs_for_preset(preset_id: str, demo_seed: dict[str, Any]) -> list
         keys.append(
             {
                 "name": GENERAL_COMPAT_API_KEY_NAME,
-                "token": "sk_genops99_demo_seed_general_compat_operations_app",
+                "token": GENERATED_ON_SEED_PLACEHOLDER,
             }
         )
 
@@ -161,7 +162,7 @@ def _api_key_specs_for_preset(preset_id: str, demo_seed: dict[str, Any]) -> list
         keys.append(
             {
                 "name": LEGAL_COMPAT_API_KEY_NAME,
-                "token": "sk_lglcompat_demo_seed_legal_compat_contract_review",
+                "token": GENERATED_ON_SEED_PLACEHOLDER,
             }
         )
 
@@ -298,6 +299,8 @@ def _upsert_api_keys(
     changed = False
     api_keys_by_name: dict[str, ApiKey] = {}
     env_demo_token = os.getenv("DEMO_APP_API_KEY", "").strip()
+    if env_demo_token == GENERATED_ON_SEED_PLACEHOLDER:
+        env_demo_token = ""
 
     for spec in _api_key_specs_for_preset(preset_id, demo_seed):
         name = str(spec.get("name") or "").strip()
@@ -312,6 +315,8 @@ def _upsert_api_keys(
             token = str(spec.get("token") or "").strip()
             if preset_id == DEFAULT_PRESET_ID and name == str((demo_seed.get("api_keys") or [{}])[0].get("name") or "") and env_demo_token:
                 token = env_demo_token
+            if token == GENERATED_ON_SEED_PLACEHOLDER:
+                token = ""
             if token:
                 row = create_api_key_from_token(tenant_id=tenant.id, name=name, token=token)
             else:

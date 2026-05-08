@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY alembic.ini /app/alembic.ini
 COPY alembic /app/alembic
 COPY app /app/app
+COPY pytest.ini /app/pytest.ini
 COPY tests /app/tests
 
 RUN addgroup --system sentinel && adduser --system --ingroup sentinel sentinel && chown -R sentinel:sentinel /app

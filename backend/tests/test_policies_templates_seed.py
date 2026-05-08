@@ -89,7 +89,7 @@ def test_seed_demo_creates_multi_preset_demo_orgs_with_general_default(monkeypat
     monkeypatch.setenv("SEED_DEMO", "1")
     monkeypatch.setenv("DEMO_TENANT_ADMIN_EMAIL", "admin@demoorg.com")
     monkeypatch.setenv("DEMO_TENANT_ADMIN_PASSWORD", "ChangeMe!12345")
-    monkeypatch.setenv("DEMO_APP_API_KEY", "sk_deadbeef_demo_secret_change_me")
+    monkeypatch.setenv("DEMO_APP_API_KEY", "__GENERATED_ON_SEED__")
 
     monkeypatch.setattr(seed_demo, "SessionLocal", TestingSessionLocal)
     seed_demo.main()
@@ -115,6 +115,8 @@ def test_seed_demo_creates_multi_preset_demo_orgs_with_general_default(monkeypat
 
         general_key = db.query(ApiKey).filter(ApiKey.tenant_id == general.id, ApiKey.name == "northwind-ops-assistant").one()
         assert general_key.is_active is True
+        assert general_key.key_prefix.startswith("sk_")
+        assert len(general_key.key_prefix) > len("sk__")
 
         legal_compat_key = db.query(ApiKey).filter(ApiKey.tenant_id == legal.id, ApiKey.name == "demo-contract-review").one()
         assert legal_compat_key.is_active is True

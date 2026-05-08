@@ -14,7 +14,7 @@
     { "email": "audit@harborview.example", "role": "auditor" }
   ],
   "api_keys": [
-    { "name": "harborview-investment-memo", "token": "sk_hvfin001_demo_seed_finance_investment_memo" }
+    { "name": "harborview-investment-memo", "token": "__GENERATED_ON_SEED__" }
   ],
   "providers": [
     {
@@ -36,7 +36,7 @@
           "fallback_model": "gpt-4.1-mini"
         }
       },
-      "secret_json": { "api_key": "demo-finance-anthropic-key" }
+      "secret_json": { "api_key": "__PLACEHOLDER_SECRET__" }
     },
     {
       "provider_type": "openai",
@@ -55,7 +55,7 @@
           "fallback_enabled": false
         }
       },
-      "secret_json": { "api_key": "demo-finance-openai-key" }
+      "secret_json": { "api_key": "__PLACEHOLDER_SECRET__" }
     }
   ],
   "policy_versions": [

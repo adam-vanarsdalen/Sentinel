@@ -14,7 +14,7 @@
     { "email": "audit@calderpine.example", "role": "auditor" }
   ],
   "api_keys": [
-    { "name": "calderpine-contract-review", "token": "sk_cdplgl01_demo_seed_legal_contract_review" }
+    { "name": "calderpine-contract-review", "token": "__GENERATED_ON_SEED__" }
   ],
   "providers": [
     {
@@ -34,7 +34,7 @@
           "fallback_enabled": false
         }
       },
-      "secret_json": { "api_key": "demo-legal-openai-key" }
+      "secret_json": { "api_key": "__PLACEHOLDER_SECRET__" }
     },
     {
       "provider_type": "anthropic",
@@ -53,7 +53,7 @@
           "fallback_enabled": false
         }
       },
-      "secret_json": { "api_key": "demo-legal-anthropic-key" }
+      "secret_json": { "api_key": "__PLACEHOLDER_SECRET__" }
     }
   ],
   "policy_versions": [

@@ -332,7 +332,13 @@ def _is_placeholder_api_key(value: str | None) -> bool:
     raw = str(value or "").strip().lower()
     if not raw:
         return True
-    return raw.startswith("demo-") or raw.startswith("change_me") or raw.startswith("placeholder")
+    return (
+        raw == "__generated_on_seed__"
+        or raw == "__placeholder_secret__"
+        or raw.startswith("demo-")
+        or raw.startswith("change_me")
+        or raw.startswith("placeholder")
+    )
 
 
 def update_secret_blob(*, row: TenantProviderConfig, secret_json: dict | None, clear_secret: bool) -> None:

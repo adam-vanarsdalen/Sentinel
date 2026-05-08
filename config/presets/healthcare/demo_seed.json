@@ -14,7 +14,7 @@
     { "email": "audit@riverbend.example", "role": "auditor" }
   ],
   "api_keys": [
-    { "name": "riverbend-care-assistant", "token": "sk_rbhlt001_demo_seed_healthcare_care_assistant" }
+    { "name": "riverbend-care-assistant", "token": "__GENERATED_ON_SEED__" }
   ],
   "providers": [
     {
@@ -37,7 +37,7 @@
           "fallback_enabled": false
         }
       },
-      "secret_json": { "api_key": "demo-healthcare-azure-key" }
+      "secret_json": { "api_key": "__PLACEHOLDER_SECRET__" }
     },
     {
       "provider_type": "openai",
@@ -56,7 +56,7 @@
           "fallback_enabled": false
         }
       },
-      "secret_json": { "api_key": "demo-healthcare-openai-key" }
+      "secret_json": { "api_key": "__PLACEHOLDER_SECRET__" }
     }
   ],
   "policy_versions": [

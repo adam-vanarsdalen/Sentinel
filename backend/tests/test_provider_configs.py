@@ -45,7 +45,7 @@ def test_provider_configs_are_tenant_isolated_and_mask_secrets(client: TestClien
     jwt1 = _login(client, "admin1@example.com", "pw12345!")
     jwt2 = _login(client, "admin2@example.com", "pw12345!")
 
-    secret = "sk-test-secret-123"
+    secret = "provider-config-test-secret"
     r = client.post(
         "/admin/provider-configs",
         headers={"Authorization": f"Bearer {jwt1}"},
