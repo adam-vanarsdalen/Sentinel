@@ -1,7 +1,26 @@
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+MIN_PRODUCTION_SECRET_LENGTH = 32
+DEFAULT_DEMO_PASSWORDS = {"ChangeMe!12345"}
+
+
+def _is_localhost_origin(origin: str) -> bool:
+    value = (origin or "").strip().lower()
+    if not value:
+        return False
+
+    parsed = urlparse(value)
+    host = parsed.hostname
+    if not host and "://" not in value:
+        host = value.split("/", 1)[0].split(":", 1)[0]
+
+    return host == "localhost" or host == "127.0.0.1"
 
 
 class Settings(BaseSettings):
@@ -61,12 +80,37 @@ class Settings(BaseSettings):
     def _validate_production(self):
         env = (self.environment or "").strip().lower()
         if env == "production":
-            if self.jwt_secret == "dev":
+            jwt_secret = (self.jwt_secret or "").strip()
+            if not jwt_secret:
+                raise ValueError("JWT_SECRET must be set in production.")
+            if jwt_secret.lower() == "dev":
                 raise ValueError("JWT_SECRET is set to insecure default 'dev' in production.")
-            if not (self.sentinel_secret_key or "").strip():
+            if len(jwt_secret) < MIN_PRODUCTION_SECRET_LENGTH:
+                raise ValueError(f"JWT_SECRET must be at least {MIN_PRODUCTION_SECRET_LENGTH} characters in production.")
+
+            sentinel_secret_key = (self.sentinel_secret_key or "").strip()
+            if not sentinel_secret_key:
                 raise ValueError("SENTINEL_SECRET_KEY must be set in production.")
-            if "*" in self.cors_origins_list:
+            if len(sentinel_secret_key) < MIN_PRODUCTION_SECRET_LENGTH:
+                raise ValueError(f"SENTINEL_SECRET_KEY must be at least {MIN_PRODUCTION_SECRET_LENGTH} characters in production.")
+
+            if any("*" in origin for origin in self.cors_origins_list):
                 raise ValueError("CORS_ORIGINS includes '*' in production.")
+            if any(_is_localhost_origin(origin) for origin in self.cors_origins_list):
+                raise ValueError("CORS_ORIGINS includes localhost or 127.0.0.1 in production.")
+
+            if self.seed_demo:
+                raise ValueError("SEED_DEMO must be disabled in production.")
+            if (self.demo_super_admin_password or "").strip() in DEFAULT_DEMO_PASSWORDS:
+                raise ValueError("DEMO_SUPER_ADMIN_PASSWORD is set to a default value in production.")
+            if (self.demo_tenant_admin_password or "").strip() in DEFAULT_DEMO_PASSWORDS:
+                raise ValueError("DEMO_TENANT_ADMIN_PASSWORD is set to a default value in production.")
+
+            if (self.provider_default or "").strip().lower() == "mock":
+                raise ValueError("PROVIDER_DEFAULT=mock is not allowed in production.")
+
+            if not (self.metrics_token or "").strip():
+                raise ValueError("METRICS_TOKEN must be set in production because /metrics is exposed.")
         return self
 
 
