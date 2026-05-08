@@ -67,7 +67,7 @@ When enabled, Sentinel stores redacted snippets for both allowed and blocked gat
 ## Audit log retention and deletion
 
 - **Retention:** Sentinel does not hard-code a retention period. Audit events remain in the database until you remove or archive them using your own database retention procedures.
-- **Deletion workflow:** There is no built-in API endpoint to delete individual audit events or to purge audit history. If your firm requires deletion/purge workflows, implement them at the database layer (or add an application-level retention job with explicit approval and change control).
+- **Deletion workflow:** There is no built-in API endpoint to delete individual audit events or to purge audit history. If your organization requires deletion/purge workflows, implement them at the database layer (or add an application-level retention job with explicit approval and change control).
 
 Operational guidance and recommended retention ranges for pilot deployments are documented in `docs/LoggingAndRetention.md`.
 

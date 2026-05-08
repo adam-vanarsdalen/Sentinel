@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { RequireRole } from "@/components/layout/require-role";
@@ -27,14 +27,16 @@ function slugify(s: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-export default function FirmsPage() {
+export default function OrganizationsPage() {
   const appConfig = useAppConfig();
   const router = useRouter();
+  const pathname = usePathname();
   const qc = useQueryClient();
   const toast = useToast();
   const orgSingular = appConfig.terminology.organization_singular;
   const orgPlural = appConfig.terminology.organization_plural;
   const orgContext = appConfig.terminology.organization_context;
+  const routeBase = pathname.startsWith("/organizations") ? "/organizations" : "/firms";
   const presetNames = React.useMemo(
     () => Object.fromEntries(appConfig.available_presets.map((preset) => [preset.id, preset.name])),
     [appConfig.available_presets],
@@ -81,7 +83,7 @@ export default function FirmsPage() {
       setCreateError(null);
       await qc.invalidateQueries({ queryKey: ["platformTenants"] });
       toast.push({ title: `${orgSingular} created`, description: res.tenant.name });
-      router.push(`/firms/${res.tenant.id}`);
+      router.push(`${routeBase}/${res.tenant.id}`);
     },
     onError: (e) => {
       if (e instanceof HttpError && e.status === 409) setCreateError(`${orgSingular} already exists (duplicate slug).`);
@@ -106,7 +108,7 @@ export default function FirmsPage() {
 
   return (
     <RequireRole allow={["super_admin"]}>
-      <main className="space-y-4" data-testid="firms">
+      <main className="space-y-4" data-testid={routeBase === "/organizations" ? "organizations" : "firms"}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-xl font-semibold">{orgPlural}</h1>
           <Button onClick={() => setCreateOpen(true)}>Create {orgContext}</Button>
@@ -170,10 +172,10 @@ export default function FirmsPage() {
                 variant="outline"
                 disabled={!pendingArchiveFirm || updateStatusMut.isPending}
                 onClick={() => {
-                  const firm = pendingArchiveFirm;
+                  const organization = pendingArchiveFirm;
                   setPendingArchiveFirm(null);
-                  if (!firm?.id) return;
-                  updateStatusMut.mutate({ tenantId: firm.id, status: "archived" });
+                  if (!organization?.id) return;
+                  updateStatusMut.mutate({ tenantId: organization.id, status: "archived" });
                 }}
               >
                 Archive
@@ -270,7 +272,7 @@ export default function FirmsPage() {
                       {items.map((t) => (
                         <tr key={t.id} className="border-b hover:bg-slate-50">
                           <td className="px-3 py-2 font-medium">
-                            <Link className="hover:underline" href={`/firms/${t.id}`}>
+                            <Link className="hover:underline" href={`${routeBase}/${t.id}`}>
                               {t.name}
                             </Link>
                             {t.demo_summary ? <div className="mt-1 text-xs font-normal text-slate-600">{t.demo_summary}</div> : null}

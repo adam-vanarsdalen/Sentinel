@@ -64,6 +64,8 @@ Stable error codes:
 
 These endpoints are for platform-wide tenant/organization administration. They do not require `X-Tenant-Id` and are restricted to `super_admin`.
 
+Frontend routing note: the public/default admin route is `/organizations`. The legacy `/firms` route remains available for compatibility and for the legal preset.
+
 - `GET /platform/tenants?query=&status=&page=&page_size=&sort=`
   - Auth: Bearer JWT, role `super_admin`
   - Response: `{ items: [...], total, page, page_size }`

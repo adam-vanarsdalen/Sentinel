@@ -33,8 +33,8 @@ Backward compatibility:
 - Legacy aliases (`tenant_admin`, `developer`, `viewer`) are still accepted and normalized to `org_admin`, `operator`, and `reviewer`.
 
 Tenant context:
-- Most admin endpoints are tenant-scoped and require a firm context.
-- A platform `super_admin` can select firm context by sending `X-Tenant-Id: <tenant_uuid>`; the UI does this via the proxy route when `tenant_id` is provided.
+- Most admin endpoints are tenant-scoped and require an organization context.
+- A platform `super_admin` can select organization context by sending `X-Tenant-Id: <tenant_uuid>`; the UI does this via the proxy route when `tenant_id` is provided.
 
 ## Gateway API keys (machine-to-machine) and how they are stored
 
@@ -69,7 +69,7 @@ Sentinel uses logical isolation in a shared database:
 - Admin queries filter by `tenant_id` before returning results.
 - Gateway audit events are written with the request’s organization `tenant_id`.
 
-This is appropriate for multi-tenant logical isolation. If your firm requires physical isolation (separate database per tenant), that is an architectural deployment change.
+This is appropriate for multi-tenant logical isolation. If your organization requires physical isolation (separate database per tenant), that is an architectural deployment change.
 
 ## Prompt injection and confidential-data (PHI-like) detection controls
 
@@ -146,7 +146,7 @@ Secret handling:
 Data minimization defaults:
 - Keep raw prompt/response storage disabled unless explicitly required and approved.
 - Prefer redacted snippets for triage over full-content retention.
-- Apply a documented database retention policy appropriate to your firm’s requirements.
+- Apply a documented database retention policy appropriate to your organization’s requirements.
 
 Access control:
 - Minimize the number of `org_admin` users.

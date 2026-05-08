@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { RequireRole } from "@/components/layout/require-role";
@@ -20,15 +20,17 @@ import { isPlatformAdmin } from "@/lib/roles";
 
 type Tab = "overview" | "settings" | "activity";
 
-export default function FirmDetailPage() {
+export default function OrganizationDetailPage() {
   const appConfig = useAppConfig();
   const params = useParams<{ id: string }>();
   const tenantId = String(params.id);
   const router = useRouter();
+  const pathname = usePathname();
   const qc = useQueryClient();
   const toast = useToast();
   const orgSingular = appConfig.terminology.organization_singular;
   const orgContext = appConfig.terminology.organization_context;
+  const routeBase = pathname.startsWith("/organizations") ? "/organizations" : "/firms";
   const presetNames = React.useMemo(
     () => Object.fromEntries(appConfig.available_presets.map((preset) => [preset.id, preset.name])),
     [appConfig.available_presets],
@@ -40,7 +42,7 @@ export default function FirmDetailPage() {
   const [tab, setTab] = React.useState<Tab>("overview");
   const [range, setRange] = React.useState<"24h" | "7d" | "30d">("7d");
 
-  const firmQuery = useQuery({
+  const organizationQuery = useQuery({
     queryKey: ["platformTenants", "get", tenantId],
     queryFn: () => api.platformTenants.get(tenantId),
     enabled: canView,
@@ -61,7 +63,7 @@ export default function FirmDetailPage() {
     },
   });
 
-  const firm = firmQuery.data?.tenant ?? null;
+  const organization = organizationQuery.data?.tenant ?? null;
 
   const [name, setName] = React.useState("");
   const [slug, setSlug] = React.useState("");
@@ -71,11 +73,11 @@ export default function FirmDetailPage() {
   const [pendingStatusChange, setPendingStatusChange] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!firm) return;
-    setName(firm.name);
-    setSlug(firm.slug ?? "");
-    setStatus(firm.status ?? "active");
-  }, [firm]);
+    if (!organization) return;
+    setName(organization.name);
+    setSlug(organization.slug ?? "");
+    setStatus(organization.status ?? "active");
+  }, [organization]);
 
   const saveMut = useMutation({
     mutationFn: async () => api.platformTenants.update(tenantId, { name, slug, status }),
@@ -92,7 +94,7 @@ export default function FirmDetailPage() {
   });
 
   const activityQuery = useQuery({
-    queryKey: ["audit", "search", "firm", tenantId],
+    queryKey: ["audit", "search", "organization", tenantId],
     queryFn: () =>
       api.audit.search(
         {
@@ -106,20 +108,20 @@ export default function FirmDetailPage() {
 
   return (
     <RequireRole allow={["super_admin"]}>
-      <main className="space-y-4" data-testid="firm-detail">
+      <main className="space-y-4" data-testid={routeBase === "/organizations" ? "organization-detail" : "firm-detail"}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-semibold">{firm ? firm.name : orgSingular}</h1>
-            {firm ? <div className="text-xs text-slate-600">{orgSingular} (Tenant): {firm.slug}</div> : null}
-            {firm ? (
+            <h1 className="text-xl font-semibold">{organization ? organization.name : orgSingular}</h1>
+            {organization ? <div className="text-xs text-slate-600">{orgSingular} (Tenant): {organization.slug}</div> : null}
+            {organization ? (
               <div className="mt-2 flex flex-wrap gap-2">
-                {firm.preset_id ? <Badge variant="secondary">{presetNames[firm.preset_id] ?? firm.preset_id}</Badge> : null}
-                {firm.demo_profile ? <Badge variant="secondary">{firm.demo_profile}</Badge> : null}
+                {organization.preset_id ? <Badge variant="secondary">{presetNames[organization.preset_id] ?? organization.preset_id}</Badge> : null}
+                {organization.demo_profile ? <Badge variant="secondary">{organization.demo_profile}</Badge> : null}
               </div>
             ) : null}
-            {firm?.demo_summary ? <div className="mt-2 max-w-2xl text-sm text-slate-600">{firm.demo_summary}</div> : null}
+            {organization?.demo_summary ? <div className="mt-2 max-w-2xl text-sm text-slate-600">{organization.demo_summary}</div> : null}
           </div>
-          <Button variant="outline" disabled={switchMut.isPending || !firm || firm.status !== "active"} onClick={() => switchMut.mutate()}>
+          <Button variant="outline" disabled={switchMut.isPending || !organization || organization.status !== "active"} onClick={() => switchMut.mutate()}>
             {switchMut.isPending ? "Switching…" : `Switch to this ${orgContext}`}
           </Button>
         </div>
@@ -237,9 +239,9 @@ export default function FirmDetailPage() {
 
               <div className="flex items-center gap-2">
                 <Button
-                  disabled={!firm || saveMut.isPending}
+                  disabled={!organization || saveMut.isPending}
                   onClick={() => {
-                    if (firm && firm.status !== status && (status === "suspended" || status === "archived")) {
+                    if (organization && organization.status !== status && (status === "suspended" || status === "archived")) {
                       setPendingStatusChange(status);
                       setConfirmStatusOpen(true);
                       return;
@@ -249,7 +251,7 @@ export default function FirmDetailPage() {
                 >
                   {saveMut.isPending ? "Saving…" : "Save"}
                 </Button>
-                <Button variant="outline" onClick={() => router.push("/firms")}>
+                <Button variant="outline" onClick={() => router.push(routeBase)}>
                   Back
                 </Button>
               </div>

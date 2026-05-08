@@ -33,7 +33,7 @@ class TrialRequestIn(BaseModel):
     @model_validator(mode="after")
     def _require_org_name(self):
         if not ((self.organization_name or "").strip() or (self.firm_name or "").strip()):
-            raise ValueError("organization_name or firm_name is required")
+            raise ValueError("organization_name is required")
         return self
 
     @field_validator("email")

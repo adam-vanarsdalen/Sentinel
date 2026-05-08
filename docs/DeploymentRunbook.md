@@ -126,7 +126,7 @@ Minimum production settings to review carefully:
 
 Important production notes:
 - `SENTINEL_SECRET_KEY` is required in production because tenant-scoped provider credentials are encrypted at rest.
-- Environment-variable model provider keys are now development fallback only. Preferred production pattern is per-firm provider config in the UI.
+- Environment-variable model provider keys are now development fallback only. Preferred production pattern is per-organization provider config in the UI.
 - Avoid wildcard CORS in production.
 - If the pilot will use email alerts, configure `SMTP_HOST`, `SMTP_PORT`, and, when applicable, `SMTP_USER` / `SMTP_PASSWORD`.
 
@@ -184,14 +184,14 @@ COMPOSE_ENV_FILE=.env.production \
 
 After bootstrap:
 1. sign in to the admin UI
-2. create or verify the pilot firm
-3. create tenant admins for that firm
-4. configure per-firm provider credentials, approvals, and resilience settings
+2. create or verify the pilot organization
+3. create tenant admins for that organization
+4. configure per-organization provider credentials, approvals, and resilience settings
 
 Provider resilience checklist:
 - Set reasonable connect/read timeouts for each provider.
 - Keep retry counts low for legal-review traffic to avoid long waits.
-- Enable fallback only when the fallback provider/model has already been approved by the firm.
+- Enable fallback only when the fallback provider/model has already been approved by the organization.
 - Document any cross-provider fallback choice in the pilot change log so legal/compliance reviewers know alternate routing is possible.
 
 ## 8) Migrations
@@ -239,7 +239,7 @@ What it checks:
 Recommended additional manual smoke checks:
 1. open the UI and confirm `/login` loads
 2. sign in as the super admin
-3. create/select the pilot firm
+3. create/select the pilot organization
 4. open **Provider Settings**
 5. open **AI Activity Log**
 6. send one test request through `/v1/chat/completions`
@@ -333,7 +333,7 @@ After restore:
 1. run `./scripts/smoke-test.sh`
 2. sign in manually
 3. verify recent audit events
-4. verify tenant/provider settings for the pilot firm
+4. verify tenant/provider settings for the pilot organization
 
 ## 13) Upgrade Procedure
 
@@ -451,8 +451,8 @@ Operational notes:
 - review backend logs for auth errors
 
 ### Admin UI loads but provider calls fail
-- verify firm-scoped provider config in **Provider Settings**
-- confirm per-firm provider approval/default settings
+- verify organization-scoped provider config in **Provider Settings**
+- confirm per-organization provider approval/default settings
 - verify `SENTINEL_SECRET_KEY` is set and stable across restarts
 
 ### Metrics endpoint should not be public
@@ -480,7 +480,7 @@ Before go-live:
 
 After go-live:
 - bootstrap super admin
-- create pilot firm and tenant admins
-- configure per-firm provider credentials
+- create pilot organization and tenant admins
+- configure per-organization provider credentials
 - run smoke tests
 - document the backup file location and rollback point

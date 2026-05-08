@@ -59,6 +59,8 @@ Repository layout:
 
 See [Architecture](docs/ARCHITECTURE.md) for request flow, trust boundaries, and component details.
 
+Terminology note: the general product uses "organization" for tenant-facing administration. The legacy `/firms` admin route remains available for compatibility, and `/organizations` is the public/default route alias. The legal preset continues to use "firm" where appropriate.
+
 ## Quickstart
 
 Prerequisites:

@@ -21,7 +21,7 @@ test("forbidden routes redirect to the 403 page", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
 
   await expect(page.getByTestId("dashboard")).toBeVisible();
-  await page.goto("/firms");
+  await page.goto("/organizations");
 
   await expect(page).toHaveURL(/\/forbidden$/);
   await expect(page.getByText("403 Forbidden")).toBeVisible();

@@ -143,8 +143,8 @@ def create_platform_tenant(db: DbDep, user: PlatformSuperAdmin, req: TenantCreat
         },
     )
 
-    # Initialize a safe default policy for new firms so governance is ready on first login.
-    # This is tenant-scoped and does not change any existing firms.
+    # Initialize a safe default policy for new organizations so governance is ready on first login.
+    # This is tenant-scoped and does not change any existing organizations.
     if not db.get(TenantPolicy, tenant.id):
         default_template_id = get_default_policy_template_id()
         tpl = get_policy_template(default_template_id)

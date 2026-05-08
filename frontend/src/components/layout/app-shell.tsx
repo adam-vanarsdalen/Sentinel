@@ -106,6 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   const role = meQuery.data?.role;
+  const organizationRoute = terms.organization_context === "firm" ? "/firms" : "/organizations";
   const nav = [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/logs", label: terms.activity_log_label },
@@ -116,11 +117,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/alerts", label: "Alerts" },
     { href: "/settings", label: "Settings" },
     { href: "/evaluations", label: "Evaluations" },
-    { href: "/firms", label: terms.organization_plural },
+    { href: organizationRoute, label: terms.organization_plural },
     { href: "/help", label: "Help & Glossary" },
   ].filter((item) => {
     if (!role) return false;
-    if (item.href === "/firms") return isPlatformAdmin(role);
+    if (item.href === organizationRoute) return isPlatformAdmin(role);
     if (item.href === "/users") return hasAnyRole(role, ["org_admin", "super_admin"]);
     if (item.href === "/providers") return hasAnyRole(role, ["org_admin"]);
     if (item.href === "/alerts") return hasAnyRole(role, ["org_admin", "compliance_admin"]);
@@ -153,7 +154,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="px-2 pb-2 text-sm font-semibold">{appConfig.product.name}</div>
       <nav className="space-y-1">
         {nav.map((item) => {
-          const active = pathname === item.href;
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}

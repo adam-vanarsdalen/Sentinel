@@ -4,7 +4,7 @@ const email = process.env.E2E_SUPERADMIN_EMAIL || "platform-admin@example.com";
 const password = process.env.E2E_SUPERADMIN_PASSWORD || "ChangeMe!12345";
 
 test("superadmin: create organization and switch context", async ({ page }) => {
-  const firmName = `Northwind Expansion ${Date.now()}`;
+  const organizationName = `Northwind Expansion ${Date.now()}`;
 
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
@@ -12,19 +12,19 @@ test("superadmin: create organization and switch context", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByTestId("dashboard")).toBeVisible();
 
-  await page.goto("/firms");
-  await expect(page.getByTestId("firms")).toBeVisible();
+  await page.goto("/organizations");
+  await expect(page.getByTestId("organizations")).toBeVisible();
 
   await page.getByRole("button", { name: "Create organization" }).click();
-  const createFirmDialog = page.getByRole("dialog");
-  await createFirmDialog.getByPlaceholder("e.g. Northwind Operations").fill(firmName);
-  await createFirmDialog.getByRole("button", { name: "Create" }).click();
+  const createOrganizationDialog = page.getByRole("dialog");
+  await createOrganizationDialog.getByPlaceholder("e.g. Northwind Operations").fill(organizationName);
+  await createOrganizationDialog.getByRole("button", { name: "Create" }).click();
 
-  const firmRowLink = page.getByRole("link", { name: firmName });
-  await expect(firmRowLink).toBeVisible();
-  const firmHref = await firmRowLink.getAttribute("href");
-  expect(firmHref).toMatch(/\/firms\/[^/]+$/);
-  const tenantId = firmHref!.split("/").pop()!;
+  const organizationRowLink = page.getByRole("link", { name: organizationName });
+  await expect(organizationRowLink).toBeVisible();
+  const organizationHref = await organizationRowLink.getAttribute("href");
+  expect(organizationHref).toMatch(/\/organizations\/[^/]+$/);
+  const tenantId = organizationHref!.split("/").pop()!;
 
   await page.evaluate(({ tenantId }) => {
     window.localStorage.setItem("sentinel_tenant_override_enabled", "1");

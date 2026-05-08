@@ -40,19 +40,19 @@ Use the fields this way:
   - In the UI, Sentinel redirects forbidden routes to the `/forbidden` page.
 
 ### `TENANT_SCOPE_ERROR`
-- Meaning: a firm-scoped action was attempted without valid firm context.
+- Meaning: an organization-scoped action was attempted without valid organization context.
 - What to do:
-  - In the admin console, select the correct firm in the top bar.
+  - In the admin console, select the correct organization in the top bar.
   - For `super_admin`, send a valid `X-Tenant-Id` for tenant-scoped admin APIs.
 
 ### `POLICY_BLOCKED`
-- Meaning: Firm AI Rules or firm provider/model approval controls rejected the request.
+- Meaning: Organization AI Rules or organization provider/model approval controls rejected the request.
 - What to do:
   - Review `error.detail`, `reason_code`, and the `policy` object in the response.
   - Common causes:
     - blocked prompt pattern
-    - provider not approved for the firm
-    - model not approved for the firm
+    - provider not approved for the organization
+    - model not approved for the organization
     - no default provider/model configured when omitted by the client
 
 ### `PROVIDER_TIMEOUT`
@@ -110,13 +110,13 @@ Use the fields this way:
     - confirm the stored webhook was saved successfully
     - confirm the target system accepts the selected webhook format (`generic`, `slack`, or `teams`)
     - confirm outbound network access from the Sentinel host
-  - Review the current firm’s recent alert history on the **Alerts** page.
+  - Review the current organization’s recent alert history on the **Alerts** page.
 
 ### Expected alerts are not arriving
 - Meaning: the underlying audit events may be below threshold, disabled, or throttled.
 - What to check:
   - Confirm the relevant trigger is enabled on the **Alerts** page.
-  - Confirm the firm’s severity threshold is not higher than the event severity.
+  - Confirm the organization’s severity threshold is not higher than the event severity.
   - Confirm the confidentiality threshold is not set above the observed `phi_score`.
   - Confirm an earlier alert of the same type was not already sent inside the throttle window.
   - Search the audit trail for `ALERT_SENT` and `ALERT_FAILED` actions for the same time range.
@@ -129,8 +129,8 @@ Use the fields this way:
   - Confirm the failures share the same provider name and are occurring inside the configured throttle window.
 
 ### Alert history is empty
-- Meaning: no alert deliveries have been attempted for the current firm.
+- Meaning: no alert deliveries have been attempted for the current organization.
 - What to do:
-  - Confirm you are viewing the correct firm.
+  - Confirm you are viewing the correct organization.
   - Send a test alert from the **Alerts** page.
   - If the test call is rejected, configure at least one email recipient or webhook first.
