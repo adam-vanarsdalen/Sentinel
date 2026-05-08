@@ -117,7 +117,7 @@ Minimum production settings to review carefully:
   - `PUBLIC_DOMAIN`
   - `CADDY_EMAIL`
   - `NEXT_PUBLIC_GATEWAY_URL`
-- Optional but recommended:
+- Additional settings:
   - `METRICS_TOKEN`
   - `APP_VERSION`
   - `SUPPORT_EMAIL`
@@ -126,6 +126,7 @@ Minimum production settings to review carefully:
 
 Important production notes:
 - `SENTINEL_SECRET_KEY` is required in production because tenant-scoped provider credentials are encrypted at rest.
+- `METRICS_TOKEN` is required in production because `/metrics` is mounted for Prometheus scraping and returns `404` without a valid `X-Metrics-Token` header.
 - Environment-variable model provider keys are now development fallback only. Preferred production pattern is per-organization provider config in the UI.
 - Avoid wildcard CORS in production.
 - If the pilot will use email alerts, configure `SMTP_HOST`, `SMTP_PORT`, and, when applicable, `SMTP_USER` / `SMTP_PASSWORD`.
@@ -457,6 +458,8 @@ Operational notes:
 
 ### Metrics endpoint should not be public
 - set `METRICS_TOKEN`
+- configure Prometheus or your collector to send `X-Metrics-Token: <METRICS_TOKEN>`
+- expect `/metrics` to return `404` in production when the token is missing or invalid
 - front the endpoint with network controls if needed
 
 ### Deploy fails on migration

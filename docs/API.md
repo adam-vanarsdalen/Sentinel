@@ -492,3 +492,5 @@ Audit event fields (selected):
   - Readiness check (DB + Redis + template availability, plus demo-tenant check when seeding is enabled)
 - `GET /metrics`
   - Prometheus-format metrics
+  - Development: open when `METRICS_TOKEN` is unset.
+  - Production: requires `X-Metrics-Token: <METRICS_TOKEN>`; missing or invalid tokens return `404`.

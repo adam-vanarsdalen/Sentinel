@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://sentinel:sentinel@localhost:5432/sentinel"
     redis_url: str = "redis://localhost:6379/0"
 
-    jwt_secret: str = "dev"
+    jwt_secret: str = "dev_jwt_secret_change_me_32_chars"
     sentinel_secret_key: str | None = None
     jwt_issuer: str = "sentinel"
     jwt_audience: str = "sentinel-ui"

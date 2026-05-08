@@ -80,5 +80,6 @@ def test_production_rejects_missing_metrics_token():
 def test_development_defaults_remain_allowed():
     settings = Settings(_env_file=None, environment="development")
     assert settings.environment == "development"
-    assert settings.jwt_secret == "dev"
+    assert settings.jwt_secret
+    assert len(settings.jwt_secret.encode("utf-8")) >= 32
     assert settings.provider_default == "mock"

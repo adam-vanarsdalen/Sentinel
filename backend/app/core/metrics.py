@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from hmac import compare_digest
+from time import perf_counter
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Header
@@ -17,17 +19,35 @@ metrics_router = APIRouter()
 
 @metrics_router.get("/metrics")
 def metrics(x_metrics_token: Annotated[Optional[str], Header()] = None) -> Response:
-    # In production, restrict metrics access at the network layer. As a defense-in-depth option,
-    # allow configuring a simple token check via METRICS_TOKEN.
-    if settings.metrics_token and x_metrics_token != settings.metrics_token:
+    configured_token = (settings.metrics_token or "").strip()
+    provided_token = (x_metrics_token or "").strip()
+    env = (settings.environment or "").strip().lower()
+
+    if env == "production" and not configured_token:
         return Response(status_code=404)
+
+    if configured_token and not compare_digest(provided_token, configured_token):
+        return Response(status_code=404)
+
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
+def _metrics_path_label(request: Request) -> str:
+    route = request.scope.get("route")
+    route_path = getattr(route, "path", None)
+    if isinstance(route_path, str) and route_path:
+        return route_path
+    return "__unmatched__"
+
+
 async def metrics_middleware(request: Request, call_next):
-    path = request.url.path
     method = request.method
-    with LATENCY.labels(path=path, method=method).time():
+    started = perf_counter()
+    try:
         resp = await call_next(request)
-    REQUESTS.labels(path=path, method=method, status=str(resp.status_code)).inc()
+    finally:
+        elapsed = perf_counter() - started
+    path_label = _metrics_path_label(request)
+    LATENCY.labels(path=path_label, method=method).observe(elapsed)
+    REQUESTS.labels(path=path_label, method=method, status=str(resp.status_code)).inc()
     return resp
