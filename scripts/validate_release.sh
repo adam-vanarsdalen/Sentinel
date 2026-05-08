@@ -96,13 +96,29 @@ SMOKE_ADMIN_FALLBACK_EMAILS="$SMOKE_ADMIN_FALLBACK_EMAILS" \
   ./scripts/smoke-test.sh
 
 echo "==> Backend tests"
-"${COMPOSE_CMD[@]}" run --rm --no-deps backend pytest -q
+"${COMPOSE_CMD[@]}" run --rm --no-deps \
+  -v "$ROOT_DIR/backend/tests:/app/tests:ro" \
+  backend pytest -q
 
 echo "==> Frontend lint"
-"${COMPOSE_CMD[@]}" run --rm --no-deps frontend npm run lint
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e HOME=/tmp/node-home \
+  -e npm_config_cache=/tmp/node-home/npm-cache \
+  -v "$ROOT_DIR/frontend:/app" \
+  -w /app \
+  node:20-alpine \
+  sh -lc "npm ci && npm run lint"
 
 echo "==> Frontend build"
-"${COMPOSE_CMD[@]}" run --rm --no-deps frontend npm run build
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e HOME=/tmp/node-home \
+  -e npm_config_cache=/tmp/node-home/npm-cache \
+  -v "$ROOT_DIR/frontend:/app" \
+  -w /app \
+  node:20-alpine \
+  sh -lc "npm ci && npm run build"
 
 rm -rf "$ARTIFACTS_DIR/playwright-report" "$ARTIFACTS_DIR/playwright-results"
 
