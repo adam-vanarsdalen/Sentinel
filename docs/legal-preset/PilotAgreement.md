@@ -42,7 +42,7 @@ SentinelLaw is designed to minimize stored content by default:
 - Does **not** store raw prompts/responses by default.
 - Optional redacted snippets can be enabled by firm policy.
 
-See `docs/DataHandling.md` for the full data handling description and defaults.
+See [`../DataHandling.md`](../DataHandling.md) for the full data handling description and defaults.
 
 ## 6) Post‑pilot path and pricing (placeholder)
 
@@ -69,4 +69,3 @@ SentinelLaw:
 - Email: __________________________________________
 - Signature: ______________________________________
 - Date: ___________________________________________
-

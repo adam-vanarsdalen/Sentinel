@@ -1,66 +1,75 @@
 # Sentinel
 
-Source available for evaluation only. Reuse, modification, redistribution, and commercial or production use are prohibited without written permission from Sentinel.
+Sentinel is an AI governance gateway for regulated teams. It sits between internal applications and model providers, applies organization policy before and after model calls, and records audit-ready evidence for security, compliance, and operations teams.
 
-Governed AI infrastructure for enterprise workflows.
+Sentinel is the core product identity. SentinelLaw is included as the legal preset for law-firm terminology, demo data, and policy templates.
 
-Sentinel is a multi-tenant AI governance platform that sits between applications and model providers, enforces organizational policy, flags risky usage, and produces audit-ready records. Sentinel is the shared product; `SentinelLaw` is a legal preset/vertical edition on the same core.
+> Source available for evaluation only. Reuse, modification, redistribution, and commercial or production use are prohibited without written permission from Sentinel.
 
 ## Why Sentinel
 
-Enterprise AI adoption is moving faster than governance controls. Teams need a practical layer that can:
+Regulated organizations are adopting AI faster than their controls can keep up. Sentinel provides a practical enforcement layer for teams that need to use model providers without losing visibility, policy control, or auditability.
 
-- enforce policy before requests hit a model
-- apply post-response checks and review gates
-- keep auditable traces by tenant, user, key, provider, and outcome
-- preserve flexibility across industries with one shared core
+Sentinel helps teams:
+
+- enforce provider, model, and usage policy before requests reach an LLM
+- flag or block risky prompts and responses using tenant-scoped rules
+- route traffic through approved model providers and model allowlists
+- keep structured audit records by tenant, user, API key, provider, model, and outcome
+- separate durable governance controls from vertical terminology and demo presets
 
 ## What It Does
 
-- tenant-scoped gateway for model requests
-- policy engine with allow/block/flag/review outcomes
-- provider routing controls and model allowlists
-- first-class providers: OpenAI, Anthropic, Azure OpenAI, and Ollama
-- security/risk signals (prompt injection, sensitive data exposure, misuse patterns)
-- immutable audit trail and exportable reporting
-- preset-driven terminology and demo framing (`general`, `legal`, `finance`, `healthcare`)
+- OpenAI-compatible gateway path for governed chat-completion requests
+- Multi-tenant admin console for policies, providers, users, API keys, audit logs, and reports
+- Policy engine with `allow`, `block`, `flag`, and review-oriented outcomes
+- Provider routing for OpenAI, Anthropic, Azure OpenAI, Ollama, and local mock workflows
+- Risk signals for prompt injection, sensitive data exposure, misuse patterns, and policy violations
+- Immutable, hash-chained audit trail with export and reporting paths
+- Preset system for general, legal, finance, and healthcare demo/terminology profiles
 
 ## Who It Is For
 
-- platform engineering teams building governed AI workflows
-- security/compliance teams needing operational controls and auditability
-- product teams requiring policy-aware AI integrations
+- Platform engineering teams adding governed AI access to internal tools
+- Security and compliance teams that need operational controls and reviewable evidence
+- Product teams integrating LLMs into regulated workflows
+- Pilot teams evaluating model-provider governance before broader AI rollout
 
-## Architecture (High Level)
+## Architecture
 
-- `frontend/` Next.js admin console
-- `backend/` FastAPI gateway + policy + audit APIs
-- `postgres` persistent state for tenancy, policy, users, keys, audit metadata
-- `redis` rate-limiting and queue backend
-- `celery` worker for async evaluation tasks
-- `config/presets/` product/preset terminology, copy, role labels, risk taxonomy, and demo seeds
+Sentinel is a Docker Compose application with a FastAPI backend, Next.js frontend, PostgreSQL datastore, Redis broker/cache, and Celery worker.
 
-See [ARCHITECTURE](docs/ARCHITECTURE.md) for detailed request flow and trust boundaries.
+```text
+application clients
+        |
+        v
+Sentinel gateway -> policy engine -> provider router -> model providers
+        |
+        v
+audit trail / reporting / admin console
+```
 
-## Stack
+Repository layout:
 
-- Backend: FastAPI, SQLAlchemy, Alembic, Celery
-- Frontend: Next.js, TypeScript, Tailwind
-- Data/Infra: PostgreSQL, Redis, Docker Compose
+- `backend/`: FastAPI gateway, admin APIs, policy evaluation, provider integrations, audit/reporting services
+- `frontend/`: Next.js admin console
+- `config/presets/`: preset manifests, terminology, demo organizations, role labels, and risk taxonomy
+- `docs/`: public technical documentation
+- `assets/`: diagrams, screenshots, and demo media placeholders
+
+See [Architecture](docs/ARCHITECTURE.md) for request flow, trust boundaries, and component details.
 
 ## Quickstart
+
+Prerequisites:
+
+- Docker Desktop or Docker Engine with Compose
+- Terminal in the repository root
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
-
-Optional local Ollama defaults are already scaffolded in `.env.example`:
-
-- `OLLAMA_ENABLED=0`
-- `OLLAMA_BASE_URL=http://localhost:11434/v1/`
-- `OLLAMA_API_KEY=` (optional; kept local and never committed)
-- `OLLAMA_DEFAULT_MODEL=gpt-oss:120b-cloud`
 
 Then open:
 
@@ -68,55 +77,63 @@ Then open:
 - API docs: `http://localhost:8000/docs`
 - Metrics: `http://localhost:8000/metrics`
 
-Default demo credentials (from `.env.example`):
+Default demo credentials from `.env.example`:
 
-- Org admin: `admin@demoorg.com` / `ChangeMe!12345`
+- Organization admin: `admin@demoorg.com` / `ChangeMe!12345`
 - Platform admin: `platform-admin@example.com` / `ChangeMe!12345`
 
-See [QUICKSTART](docs/QUICKSTART.md) for preset-specific run modes and validation steps.
+See [Quickstart](docs/QUICKSTART.md) for preset-specific run modes and validation steps.
 
-## Product Editions
+## Presets
 
-- `general` (default): Sentinel shared enterprise framing
-- `legal`: SentinelLaw legal terminology and legal demo profile
+Sentinel uses presets to keep the governance platform shared while adapting labels, sample data, policy templates, and demo framing for specific environments.
+
+- `general`: default Sentinel product framing
+- `legal`: SentinelLaw legal preset
 - `finance`: regulated-finance framing
-- `healthcare`: clinical/safety framing
+- `healthcare`: clinical and safety-oriented framing
 
-Preset behavior is documented in supplemental docs: `docs/presets.md` and `docs/demo_modes.md`.
+See [Presets](docs/presets.md), [Demo Modes](docs/demo_modes.md), and [SentinelLaw Legal Preset](docs/legal-preset/README.md).
 
-## Core Documentation
+## Documentation
 
-- [QUICKSTART](docs/QUICKSTART.md)
-- [ARCHITECTURE](docs/ARCHITECTURE.md)
+- [Docs Index](docs/README.md)
+- [Quickstart](docs/QUICKSTART.md)
+- [Architecture](docs/ARCHITECTURE.md)
 - [API](docs/API.md)
-- [MODEL_CATALOG_AUDIT](docs/MODEL_CATALOG_AUDIT.md)
-- [MODEL_PROVIDER_INTEGRATION_NOTES](docs/MODEL_PROVIDER_INTEGRATION_NOTES.md)
-- [POLICY_ENGINE](docs/POLICY_ENGINE.md)
-- [AUDIT_AND_LOGGING](docs/AUDIT_AND_LOGGING.md)
-- [THREAT_MODEL](docs/THREAT_MODEL.md)
-- [DEPLOYMENT](docs/DEPLOYMENT.md)
-- [DEMO_SCRIPT](docs/DEMO_SCRIPT.md)
-- [RELEASE_CHECKLIST](docs/RELEASE_CHECKLIST.md)
-- [DECISIONS](docs/DECISIONS.md)
-- [ROADMAP](docs/ROADMAP.md)
+- [Policy Engine](docs/POLICY_ENGINE.md)
+- [Provider Routing](docs/ProviderRouting.md)
+- [Audit and Logging](docs/AUDIT_AND_LOGGING.md)
+- [Security Overview](docs/SecurityOverview.md)
+- [Threat Model](docs/THREAT_MODEL.md)
+- [Deployment](docs/DEPLOYMENT.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Screenshots](docs/SCREENSHOTS.md)
 
-## Roadmap Snapshot
+## Security and Data Handling
 
-- Near term: harden policy workflow UX, stronger audit/report ergonomics, preset expansion quality
-- Mid term: deeper enterprise controls (SSO/SAML, stronger compliance integrations)
-- Longer term: multi-region deployment hardening and broader governance automation
+Sentinel is a governance and control layer. It is not a substitute for legal, regulatory, or security review.
 
-See [ROADMAP](docs/ROADMAP.md) for detail.
+Default posture:
 
-## Security and Governance Orientation
+- raw prompts and responses are not stored by default
+- audit records prioritize metadata, hashes, outcomes, and correlation identifiers
+- tenant and role boundaries are enforced server-side
+- provider credentials and routing policy are managed through tenant-scoped controls
 
-Sentinel is built as a governance/control layer, not a replacement for legal/compliance judgment.
+See [Security](SECURITY.md), [Data Handling](docs/DataHandling.md), and [Threat Model](docs/THREAT_MODEL.md).
 
-- default posture avoids raw prompt/response storage
-- audit traces include deterministic metadata and integrity-oriented controls
-- tenancy and role boundaries are enforced server-side
+## Roadmap
 
-See [SECURITY](SECURITY.md) and [THREAT_MODEL](docs/THREAT_MODEL.md).
+Current roadmap themes:
+
+- stronger policy workflow ergonomics
+- richer audit and reporting surfaces
+- enterprise identity and compliance integrations
+- expanded deployment hardening
+- broader preset quality across regulated domains
+
+See [Roadmap](docs/ROADMAP.md).
 
 ## Assets
 
@@ -125,3 +142,5 @@ Project media belongs in:
 - `assets/screenshots/`
 - `assets/diagrams/`
 - `assets/demo/`
+
+Screenshot capture targets are tracked in [Screenshots](docs/SCREENSHOTS.md).

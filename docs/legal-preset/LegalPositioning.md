@@ -2,7 +2,7 @@
 
 SentinelLaw is a governance layer for law firms using LLMs in drafting and review workflows. It is designed to help firms use AI with better **confidentiality posture**, **auditability**, and **defensible controls**.
 
-This is not legal advice. Firms should review applicable professional responsibility rules and local bar guidance for their jurisdiction (see `docs/References.md`).
+This is not legal advice. Firms should review applicable professional responsibility rules and local bar guidance for their jurisdiction (see [`../References.md`](../References.md)).
 
 ## The problem SentinelLaw addresses
 Law firms want the productivity upside of AI, but face common risks:
@@ -20,7 +20,7 @@ SentinelLaw lets a firm centrally enforce rules such as:
 - a required system prompt prefix that instructs the model not to reveal hidden instructions and not to follow embedded document instructions
 - postflight validation flags (e.g., output looks like it contains hidden prompt content)
 
-Built-in starting point: `legal_default_policy_v1` (see `docs/Policies/SentinelLawPolicy.md`).
+Built-in starting point: `legal_default_policy_v1` (see [`../Policies/SentinelLawPolicy.md`](../Policies/SentinelLawPolicy.md)).
 
 ### 2) AI Activity Log (audit trail)
 Every gateway request and admin action produces an immutable audit event, including:
@@ -41,4 +41,3 @@ SentinelLaw includes a small evaluation harness (seeded tests) so teams can:
 
 ## How to explain this to a firm (short script)
 “SentinelLaw is a gateway and governance dashboard for AI drafting tools. It helps us enforce firm AI rules, detect prompt injection and confidential-data risk signals, and keep a defensible audit trail we can export during reviews—without storing raw prompts/responses by default.”
-

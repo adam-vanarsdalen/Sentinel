@@ -2,6 +2,8 @@
 
 Date: 2026-04-14
 
+Note: this is a historical publication-prep record. Some paths listed below were later moved under `docs/internal/` or `docs/legal-preset/` during public documentation cleanup.
+
 ## Scope reviewed
 
 - Root publication files and compose config

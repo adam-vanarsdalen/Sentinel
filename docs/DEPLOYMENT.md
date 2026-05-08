@@ -63,6 +63,6 @@ NEXT_PUBLIC_SENTINEL_PRESET=legal
 
 ## References
 
-- `docs/RELEASE_CHECKLIST.md`
+- `docs/internal/publication/RELEASE_CHECKLIST.md`
 - `docs/Troubleshooting.md`
 - `docs/DeploymentRunbook.md` (supplemental runbook detail)
