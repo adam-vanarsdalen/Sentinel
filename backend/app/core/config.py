@@ -59,6 +59,8 @@ class Settings(BaseSettings):
 
     rate_limit_tenant_per_minute: int = 600
     rate_limit_apikey_per_minute: int = 120
+    rate_limit_login_ip_per_minute: int = 30
+    rate_limit_login_identifier_per_minute: int = 10
 
     seed_demo: bool = False
     demo_super_admin_email: str = "platform-admin@example.com"

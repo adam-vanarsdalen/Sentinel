@@ -90,7 +90,7 @@ def create_user(req: CreateUserRequest, db: DbDep, user: UsersWriter) -> CreateU
         db,
         tenant_id=target_tenant_id,
         user_id=user.id,
-        action_type="USER_CREATE",
+        action_type="ADMIN_USER_CREATE",
         outcome="success",
         reason="User created",
         event_data={"created_user_id": new_user.id, "email": new_user.email, "role": new_user.role},

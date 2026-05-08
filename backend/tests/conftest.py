@@ -41,8 +41,10 @@ def client(db_session: Session) -> TestClient:
 
     # Disable Redis rate limiting in tests
     import app.api.routes.gateway as gw
+    import app.api.routes.auth as auth
 
     gw.enforce_rate_limits = lambda **kwargs: None  # type: ignore[assignment]
+    auth.enforce_login_rate_limits = lambda **kwargs: None  # type: ignore[assignment]
 
     with TestClient(app) as c:
         yield c
@@ -60,8 +62,10 @@ def client_no_raise(db_session: Session) -> TestClient:
 
     # Disable Redis rate limiting in tests
     import app.api.routes.gateway as gw
+    import app.api.routes.auth as auth
 
     gw.enforce_rate_limits = lambda **kwargs: None  # type: ignore[assignment]
+    auth.enforce_login_rate_limits = lambda **kwargs: None  # type: ignore[assignment]
 
     with TestClient(app, raise_server_exceptions=False) as c:
         yield c

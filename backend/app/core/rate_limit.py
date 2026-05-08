@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import hashlib
 import time
 
 from fastapi import HTTPException, status
@@ -42,3 +43,21 @@ def enforce_rate_limits(
 ) -> None:
     _hit(f"tenant:{tenant_id}", tenant_per_minute or settings.rate_limit_tenant_per_minute)
     _hit(f"apikey:{api_key_id}", api_key_per_minute or settings.rate_limit_apikey_per_minute)
+
+
+def _hash_identifier(value: str) -> str:
+    return hashlib.sha256(value.strip().lower().encode("utf-8")).hexdigest()
+
+
+def enforce_login_rate_limits(
+    *,
+    ip_address: str,
+    identifier: str,
+    ip_per_minute: int | None = None,
+    identifier_per_minute: int | None = None,
+) -> None:
+    _hit(f"login:ip:{ip_address}", ip_per_minute or settings.rate_limit_login_ip_per_minute)
+    _hit(
+        f"login:identifier:{_hash_identifier(identifier)}",
+        identifier_per_minute or settings.rate_limit_login_identifier_per_minute,
+    )
