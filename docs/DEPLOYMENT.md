@@ -30,6 +30,7 @@ Production checklist:
 - set `METRICS_TOKEN` and configure metrics scrapers to send `X-Metrics-Token`
 - set `SEED_DEMO=0`
 - set `PROVIDER_DEFAULT` to a real provider, not `mock`
+- set `COOKIE_SECURE=1`
 - use managed secrets (not committed files)
 - terminate TLS at ingress/reverse proxy
 - restrict network access to backend and data services
