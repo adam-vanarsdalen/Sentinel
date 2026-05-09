@@ -8,7 +8,7 @@ ARTIFACTS_DIR="${ARTIFACTS_DIR:-$ROOT_DIR/artifacts/validate-release}"
 BACKEND_PORT="${BACKEND_PORT:-18000}"
 FRONTEND_PORT="${FRONTEND_PORT:-13000}"
 COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-sentinel_validate}"
-PLAYWRIGHT_IMAGE="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.50.1-noble}"
+PLAYWRIGHT_IMAGE="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.59.1-noble}"
 
 resolve_version() {
   if [[ -n "${APP_VERSION:-}" ]]; then

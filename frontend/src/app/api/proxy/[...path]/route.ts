@@ -16,25 +16,27 @@ function errorBody(code: string, message: string, detail: string, retryable = fa
   };
 }
 
-export async function GET(req: Request, ctx: { params: { path: string[] } }) {
+type ProxyRouteContext = { params: Promise<{ path: string[] }> };
+
+export async function GET(req: Request, ctx: ProxyRouteContext) {
   return proxy(req, ctx);
 }
-export async function POST(req: Request, ctx: { params: { path: string[] } }) {
+export async function POST(req: Request, ctx: ProxyRouteContext) {
   return proxy(req, ctx);
 }
-export async function PUT(req: Request, ctx: { params: { path: string[] } }) {
+export async function PUT(req: Request, ctx: ProxyRouteContext) {
   return proxy(req, ctx);
 }
-export async function PATCH(req: Request, ctx: { params: { path: string[] } }) {
+export async function PATCH(req: Request, ctx: ProxyRouteContext) {
   return proxy(req, ctx);
 }
-export async function DELETE(req: Request, ctx: { params: { path: string[] } }) {
+export async function DELETE(req: Request, ctx: ProxyRouteContext) {
   return proxy(req, ctx);
 }
 
-async function proxy(req: Request, ctx: { params: { path: string[] } }) {
+async function proxy(req: Request, ctx: ProxyRouteContext) {
   const baseUrl = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) {
     return NextResponse.json(errorBody("AUTH_REQUIRED", "Authentication required.", "Unauthenticated"), { status: 401 });
   }
@@ -42,7 +44,8 @@ async function proxy(req: Request, ctx: { params: { path: string[] } }) {
   const url = new URL(req.url);
   const tenantIdFromQuery = url.searchParams.get("tenant_id");
   if (tenantIdFromQuery) url.searchParams.delete("tenant_id");
-  const target = new URL(`${baseUrl}/${ctx.params.path.join("/")}`);
+  const params = await ctx.params;
+  const target = new URL(`${baseUrl}/${params.path.join("/")}`);
   target.search = url.search;
 
   const headers = new Headers(req.headers);

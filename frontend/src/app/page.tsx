@@ -14,8 +14,8 @@ export async function generateMetadata() {
   };
 }
 
-export default function Home() {
-  const token = cookies().get("sentinel_access_token")?.value;
+export default async function Home() {
+  const token = (await cookies()).get("sentinel_access_token")?.value;
   if (token) redirect("/dashboard");
   return <Landing />;
 }

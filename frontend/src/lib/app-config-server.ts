@@ -40,9 +40,9 @@ async function listAvailablePresets(root: string): Promise<AppConfig["available_
   }
 }
 
-function readCookiePreset(): string | null {
+async function readCookiePreset(): Promise<string | null> {
   try {
-    return cookies().get(PRESET_COOKIE_NAME)?.value?.trim().toLowerCase() || null;
+    return (await cookies()).get(PRESET_COOKIE_NAME)?.value?.trim().toLowerCase() || null;
   } catch {
     return null;
   }
@@ -52,7 +52,7 @@ export async function loadAppConfig(options?: { presetId?: string | null }): Pro
   const root = presetsRoot();
   const requestedPreset = (
     options?.presetId ||
-    readCookiePreset() ||
+    (await readCookiePreset()) ||
     process.env.NEXT_PUBLIC_SENTINEL_PRESET ||
     process.env.SENTINEL_PRESET ||
     DEFAULT_PRESET_ID
