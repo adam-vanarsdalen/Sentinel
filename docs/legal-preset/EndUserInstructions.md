@@ -20,8 +20,6 @@ You can:
 - Run Safety & Consistency Tests and compare results over time.
 - Manage basic settings and users (if you are allowed).
 
-[Screenshot: Home / Dashboard] Show the left navigation, top bar, and key metric cards.
-
 ---
 
 ## Getting Started — Log in and access the right firm
@@ -35,8 +33,6 @@ Logging in confirms who you are. Choosing the correct firm ensures you only see 
 - Use a modern browser (Chrome, Edge, or Firefox recommended).
 
 ### Log in to SentinelLaw
-[Screenshot: Login page] Show the “Email” field, “Password” field, and “Sign in” button.
-
 1) Open the SentinelLaw login page in your browser.
 2) Enter your email address in the field labeled “Email.”
 3) Enter your password in the field labeled “Password.”
@@ -53,8 +49,6 @@ SentinelLaw password reset is typically handled by your administrator in pilot d
 
 ### Switch firms (if applicable)
 Some users (for example, platform administrators) can view multiple firms. Most users have only one firm.
-
-[Screenshot: Firm selector] Show the top bar with a “Select firm” button or firm name.
 
 1) Click the button in the top bar labeled “Select firm.”
 2) Click the firm name you want to view.
@@ -81,8 +75,6 @@ The dashboard provides a quick view of activity trends, potential risk signals, 
 - Select a firm (if you have a firm selector).
 
 ### View system metrics
-[Screenshot: Dashboard metrics] Show the metric cards and charts.
-
 1) Click “Dashboard” in the left navigation.
 2) Review the metric cards at the top of the page.
 3) Review the charts and breakdowns below the cards.
@@ -98,8 +90,6 @@ The dashboard provides a quick view of activity trends, potential risk signals, 
 - **Severity**: A simple “low / medium / high” risk level used to help you prioritize review.
 
 ### Change time ranges and filters
-[Screenshot: Dashboard range selector] Show the “Last 24 hours / Last 7 days / Last 30 days” dropdown.
-
 1) Click the time range selector near the top of the dashboard.
 2) Select “Last 24 hours,” “Last 7 days,” or “Last 30 days.”
 3) Wait for the dashboard to refresh.
@@ -121,14 +111,10 @@ Audit logs are the core record of what happened. Use them to investigate inciden
 - Select a firm (if you have a firm selector).
 
 ### Open the AI activity log page
-[Screenshot: Navigation] Highlight “AI Activity Log (Audit Trail)” in the left navigation.
-
 1) Click “AI Activity Log (Audit Trail)” in the left navigation.
 2) Confirm you see the “Filters” panel and the “Events” table.
 
 ### Filter logs (date, app, severity)
-[Screenshot: Logs filters] Show Start/End date, Action, Outcome, Severity, API Key, and Flag fields.
-
 1) Set a start time in the field labeled “Start.”
 2) Set an end time in the field labeled “End.”
 3) Select an action in the dropdown labeled “Action” (optional).
@@ -138,16 +124,12 @@ Audit logs are the core record of what happened. Use them to investigate inciden
 7) Optionally filter by “User” to see events performed by a specific dashboard user (admin actions).
 
 ### Save a filter view (optional)
-[Screenshot: Views menu] Show the “Views” button and “Save current…” option.
-
 1) Click the button labeled “Views.”
 2) Click the option labeled “Save current…”
 3) Enter a name for your view.
 4) Click the button labeled “Save.”
 
 ### View expanded log details
-[Screenshot: Event details modal] Show the event summary, risk signals, hashes, and redacted snippets.
-
 1) Click a row in the “Events” table.
 2) Review the “Summary” section for action and outcome.
 3) Review the “Risk Signals” section for flags and confidential data score.
@@ -155,8 +137,6 @@ Audit logs are the core record of what happened. Use them to investigate inciden
 5) Click the button labeled “Copy request_id” if you need to reference the event in a ticket.
 
 ### Export logs and client audit reports
-[Screenshot: Export buttons] Show “Generate Client Audit Report,” “Export CSV,” “Export JSON,” and “Export PDF.”
-
 1) Apply the filters you want to export.
 2) For a client-ready flow, click **Generate Client Audit Report**.
 3) Choose:
@@ -196,8 +176,6 @@ API keys let an application connect to SentinelLaw. Treat them like passwords fo
 - Know the name of the app or system that will use the key.
 
 ### Create a new API key
-[Screenshot: API Keys page] Show the “Create key” button and the keys table.
-
 1) Click “API Keys” in the left navigation.
 2) Click the button labeled “Create key.”
 3) Type a key name in the field labeled “Name” (for example, “radiology-app”).
@@ -205,16 +183,12 @@ API keys let an application connect to SentinelLaw. Treat them like passwords fo
 5) Confirm you see the secret value labeled “Secret (copy now).”
 
 ### Copy and store the key safely
-[Screenshot: Secret shown once] Show the secret block and “Copy” button.
-
 1) Click the button labeled “Copy.”
 2) Save the key in your organization’s approved secure storage (for example, a password manager or vault).
 3) Share the key only with the system owner who needs it.
 4) Record who received the key and why (your organization may require this).
 
 ### Revoke a key
-[Screenshot: Revoke button] Show the “Revoke” button in the Actions column.
-
 1) Find the key you want to disable in the keys list.
 2) Click the button labeled “Revoke.”
 3) Confirm the key shows as “revoked.”
@@ -322,8 +296,6 @@ A rule set is a set of rules you define. Firm AI Rules can block certain request
 - Agree internally on what you want to block or flag (for example, prompt injection attempts).
 
 ### Open the policies editor
-[Screenshot: Firm AI Rules page] Show the JSON editor, “Publish” button, and “Test Rules (Dry Run)” section.
-
 1) Click “Firm AI Rules” in the left navigation.
 2) Review the rule text in the “Firm AI Rules (JSON)” panel.
 3) Review the **Version History** panel on the right before making changes.
@@ -345,8 +317,6 @@ Rules are written as structured text. SentinelLaw checks it before saving. If yo
 - Dry-run results can show detector names and redacted normalized examples so administrators can understand why a prompt was flagged without exposing the full prompt.
 
 ### Test a policy against example text
-[Screenshot: Dry run panel] Show “Sample prompt,” “Sample response,” and “Run dry-run.”
-
 1) Enter an example request in the field labeled “Sample prompt.”
 2) Enter an example response in the field labeled “Sample response.”
 3) Click the button labeled “Run dry-run.”
@@ -382,8 +352,6 @@ Rules are written as structured text. SentinelLaw checks it before saving. If yo
 - Policy templates and published firm policies are tracked separately so reviewers can compare a customized version back to its template baseline.
 
 ### Save / publish changes
-[Screenshot: Publish confirm dialog] Show the confirmation dialog.
-
 1) Click the button labeled “Publish.”
 2) Confirm the change when you see the confirmation dialog.
 3) Confirm you see a message that the policy was published.
@@ -405,8 +373,6 @@ Safety & Consistency Tests help you check whether models and configurations beha
 - Understand the goal of the run (for example, “verify we block prompt injection attempts”).
 
 ### Run the test suite
-[Screenshot: Tests run dialog] Show “Run suite,” provider/model choices, and the Run button.
-
 1) Click “Safety & Consistency Tests” in the left navigation.
 2) Click the button labeled “Run suite.”
 3) Select a provider in the dropdown labeled “Provider.”
@@ -415,8 +381,6 @@ Safety & Consistency Tests help you check whether models and configurations beha
 6) Wait for the run status to change to “finished.”
 
 ### Read results and compare runs
-[Screenshot: Run details] Show pass/fail counts and a “Previous” reference.
-
 1) Click a row in the “Runs” table to open run details.
 2) Review the pass and fail counts at the top.
 3) Review the pass rate and the change vs the previous run (if shown).
@@ -448,8 +412,6 @@ Alerts let your firm receive governance notifications without watching the dashb
 - Have at least one email address or webhook destination ready.
 
 ### Open and configure Alerts
-[Screenshot: Alerts page] Show the delivery settings, trigger checkboxes, and recent alert history.
-
 1) Click **Alerts** in the left navigation.
 2) Enter one or more recipient email addresses, one per line.
 3) Optionally add a webhook URL if your firm wants alerts sent to Slack, Teams, or another internal system.
@@ -493,8 +455,6 @@ Settings control what is stored in the audit trail. User management controls who
 - Have a role that allows settings and user management (ask your administrator if you are unsure).
 
 ### Open and update settings
-[Screenshot: Settings page] Show “Content Storage” and the link to the Alerts page.
-
 1) Click “Settings” in the left navigation.
 2) Review the “Content Storage” section.
 3) Select a storage mode in the dropdown labeled “Storage mode.”
@@ -507,8 +467,6 @@ Settings control what is stored in the audit trail. User management controls who
 - **Store full content**: Stores the text. This can increase risk because it may include sensitive information.
 
 ### Add a user (if permitted)
-[Screenshot: Users page] Show “Create user,” email field, role dropdown, and temporary password display.
-
 1) Click “Users & Roles” in the left navigation.
 2) Click the button labeled “Create user.”
 3) Enter the user’s email address.
@@ -517,23 +475,17 @@ Settings control what is stored in the audit trail. User management controls who
 6) Copy the temporary password shown and deliver it through your organization’s approved method.
 
 ### Review a user’s activity (quick audit)
-[Screenshot: User Activity modal] Show clicking a user row and the “User Activity” dialog.
-
 1) Click “Users & Roles” in the left navigation.
 2) Click a user row (active or inactive).
 3) Review the “User Activity” list.
 4) Click “View in AI Activity Log” to open the full log filtered to that user.
 
 ### Change a user’s role (if permitted)
-[Screenshot: Role dropdown in table] Show the role selector in the user row.
-
 1) Find the user in the list.
 2) Select the new role from the dropdown in the “Actions” column.
 3) Confirm you see a message that the role was updated.
 
 ### Delete a user (remove access) (if permitted)
-[Screenshot: Delete button] Show “Delete” in the user row.
-
 1) Find the user in the list.
 2) Click the button labeled “Delete.”
 3) Confirm the prompt to remove access.

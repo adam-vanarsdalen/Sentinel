@@ -27,6 +27,7 @@ Production checklist:
 
 - set strong `JWT_SECRET`
 - set `SENTINEL_SECRET_KEY`
+- set `CORS_ORIGINS` only to production browser origins when cross-origin API access is required
 - set `METRICS_TOKEN` and configure metrics scrapers to send `X-Metrics-Token`
 - set `SEED_DEMO=0`
 - set `PROVIDER_DEFAULT` to a real provider, not `mock`

@@ -84,6 +84,8 @@ Default demo credentials from `.env.example`:
 - Organization admin: `admin@demoorg.com` / `ChangeMe!12345`
 - Platform admin: `platform-admin@example.com` / `ChangeMe!12345`
 
+These credentials are for local development only. Production configuration rejects demo seeding and default demo passwords.
+
 See [Quickstart](docs/QUICKSTART.md) for preset-specific run modes and validation steps.
 
 ## Presets
