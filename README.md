@@ -112,6 +112,12 @@ See [Presets](docs/presets.md), [Demo Modes](docs/demo_modes.md), and [SentinelL
 - [Roadmap](docs/ROADMAP.md)
 - [Screenshots](docs/SCREENSHOTS.md)
 
+## Screenshots
+
+Public screenshots are not committed yet. Expected screenshot paths and local capture instructions are documented in [Screenshots](docs/SCREENSHOTS.md).
+
+When real screenshots are added, place them under `assets/screenshots/` using the documented filenames so they can be referenced from this README without changing paths.
+
 ## Security and Data Handling
 
 Sentinel is a governance and control layer. It is not a substitute for legal, regulatory, or security review.

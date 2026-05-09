@@ -8,7 +8,8 @@
     "lint": "next lint",
     "build": "next build",
     "start": "next start",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "screenshots": "playwright test tests/capture-screenshots.spec.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "3.9.1",
