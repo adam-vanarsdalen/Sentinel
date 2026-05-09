@@ -33,3 +33,4 @@ Temporary contact channel for this repo: open a private security advisory on Git
 ## Safe harbor
 
 Good-faith security research and responsible disclosure are welcomed.
+This safe-harbor statement does not grant rights beyond the repository license.

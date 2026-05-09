@@ -2,6 +2,9 @@
 
 Thanks for contributing.
 
+Sentinel is source-available for evaluation only under the repository [LICENSE](LICENSE).
+Opening an issue or pull request does not grant usage rights beyond that license.
+
 ## Engineering principles
 
 - Keep Sentinel governance-first: policy enforcement, tenancy boundaries, and auditability are non-negotiable.

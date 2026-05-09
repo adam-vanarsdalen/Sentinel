@@ -4,7 +4,7 @@ Sentinel is an AI governance gateway for regulated teams. It sits between intern
 
 Sentinel is the core product identity. SentinelLaw is included as the legal preset for law-firm terminology, demo data, and policy templates.
 
-> Source available for evaluation only. Reuse, modification, redistribution, and commercial or production use are prohibited without written permission from Sentinel.
+> Source available for evaluation only. Reuse, modification, redistribution, and commercial or production use are prohibited without written permission from the repository owner, adam-vanarsdalen.
 
 ## Why Sentinel
 
@@ -124,6 +124,12 @@ Default posture:
 - provider credentials and routing policy are managed through tenant-scoped controls
 
 See [Security](SECURITY.md), [Data Handling](docs/DataHandling.md), and [Threat Model](docs/THREAT_MODEL.md).
+
+## License
+
+Sentinel is source-available for review and evaluation only. The code is not open source, and public repository access does not grant permission to reuse, modify, redistribute, run in production, or use commercially unless separately licensed.
+
+See [LICENSE](LICENSE) for the controlling terms. For commercial licensing or additional usage permissions, contact the repository owner, adam-vanarsdalen.
 
 ## Roadmap
 

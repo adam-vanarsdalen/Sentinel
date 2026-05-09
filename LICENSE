@@ -1,5 +1,5 @@
 Sentinel Proprietary Evaluation License
-Copyright (c) 2026 Sentinel. All rights reserved.
+Copyright (c) 2026 adam-vanarsdalen. All rights reserved.
 
 Permission is granted to view and access this repository and its contents solely for
 personal, internal, non-commercial evaluation of the Software.
@@ -7,7 +7,8 @@ personal, internal, non-commercial evaluation of the Software.
 Except for the limited permission above, no rights are granted, whether expressly,
 by implication, estoppel, or otherwise.
 
-Without prior written permission from Sentinel, you may not:
+Without prior written permission from the repository owner, adam-vanarsdalen,
+you may not:
 
 1. use, copy, reproduce, modify, adapt, translate, or create derivative works of the Software;
 2. distribute, publish, sublicense, lease, lend, sell, transfer, or otherwise make the Software
@@ -27,10 +28,10 @@ property rights except as expressly stated above.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-PURPOSE, TITLE, AND NON-INFRINGEMENT. IN NO EVENT SHALL SENTINEL OR THE COPYRIGHT HOLDERS
+PURPOSE, TITLE, AND NON-INFRINGEMENT. IN NO EVENT SHALL ADAM-VANARSDALEN OR THE COPYRIGHT HOLDERS
 BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 OR OTHER DEALINGS IN THE SOFTWARE.
 
 For licensing or commercial use inquiries, contact:
-the repository owner.
+the repository owner, adam-vanarsdalen.
