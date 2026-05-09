@@ -15,6 +15,7 @@ This directory contains public technical documentation for Sentinel.
 - [Deployment](DEPLOYMENT.md)
 - [Roadmap](ROADMAP.md)
 - [Screenshots](SCREENSHOTS.md)
+- [Release Checklist](RELEASE_CHECKLIST.md)
 
 ## Operations and examples
 
@@ -32,6 +33,7 @@ This directory contains public technical documentation for Sentinel.
 - [Audit Event Mapping](AuditEventMapping.md)
 - [Model Catalog Audit](MODEL_CATALOG_AUDIT.md)
 - [Model Provider Integration Notes](MODEL_PROVIDER_INTEGRATION_NOTES.md)
+- [Governance Review Checklist](GOVERNANCE_REVIEW_CHECKLIST.md)
 - [References](References.md)
 
 ## Presets
