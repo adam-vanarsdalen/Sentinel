@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0F0F1A;
+  --panel: #1A1A2E;
+  --border: #2D2D4A;
+  --purple: #7C3AED;
+  --purple-light: #A78BFA;
+}
+
+body {
+  background-color: var(--bg);
+  color: #E2E8F0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+@keyframes row-flash {
+  0% { background-color: rgba(124, 58, 237, 0.3); }
+  100% { background-color: transparent; }
+}
+
+.row-new {
+  animation: row-flash 1.5s ease-out;
+}
