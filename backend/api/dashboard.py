@@ -12,7 +12,6 @@ from dependencies import get_db
 from models.alert import Alert
 from models.audit_entry import AuditEntry
 from models.compliance_package import CompliancePackage
-from models.request_log import RequestLog
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -22,14 +21,18 @@ async def get_metrics(tenant_id: str, db: AsyncSession = Depends(get_db)):
     tid = uuid.UUID(tenant_id)
     since = datetime.now(timezone.utc) - timedelta(hours=24)
 
-    total = await db.scalar(
-        select(func.count()).select_from(RequestLog)
-        .where(RequestLog.tenant_id == tid, RequestLog.created_at >= since)
+    # Count all processed requests (passed + blocked)
+    passed = await db.scalar(
+        select(func.count()).select_from(AuditEntry)
+        .where(AuditEntry.tenant_id == tid, AuditEntry.action == "pipeline_complete",
+               AuditEntry.created_at >= since)
     )
     blocked = await db.scalar(
-        select(func.count()).select_from(RequestLog)
-        .where(RequestLog.tenant_id == tid, RequestLog.status == "blocked", RequestLog.created_at >= since)
+        select(func.count()).select_from(AuditEntry)
+        .where(AuditEntry.tenant_id == tid, AuditEntry.action == "request_blocked",
+               AuditEntry.created_at >= since)
     )
+    total = (passed or 0) + (blocked or 0)
     anomalies = await db.scalar(
         select(func.count()).select_from(Alert)
         .where(Alert.tenant_id == tid, Alert.alert_type == "anomaly", Alert.created_at >= since)
@@ -46,3 +49,18 @@ async def get_metrics(tenant_id: str, db: AsyncSession = Depends(get_db)):
         "compliance_packages": packages or 0,
         "period_hours": 24,
     }
+
+
+@router.get("/recent-rps")
+async def get_recent_rps(tenant_id: str, db: AsyncSession = Depends(get_db)):
+    tid = uuid.UUID(tenant_id)
+    since = datetime.now(timezone.utc) - timedelta(seconds=60)
+    count = await db.scalar(
+        select(func.count()).select_from(AuditEntry)
+        .where(
+            AuditEntry.tenant_id == tid,
+            AuditEntry.action.in_(["pipeline_complete", "request_blocked"]),
+            AuditEntry.created_at >= since,
+        )
+    )
+    return {"rps": round((count or 0) / 60, 3)}

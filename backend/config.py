@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     openai_api_key: str = ""
 
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_default_model: str = "qwen3.5:4b-q4_K_M"
+
     secret_key: str = "change-me-in-production"
     environment: str = "development"
     log_level: str = "INFO"

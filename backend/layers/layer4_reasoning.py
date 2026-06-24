@@ -65,6 +65,42 @@ async def _call_openai(
     return resp.json()
 
 
+async def _call_ollama(
+    messages: list[dict],
+    tools: list[dict] | None,
+    model: str,
+    client: httpx.AsyncClient,
+) -> dict[str, Any]:
+    """Use native /api/chat so think:false is honoured by qwen3.x models."""
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "stream": False,
+        "think": False,
+        "options": {"num_predict": 256},
+    }
+    if tools:
+        payload["tools"] = tools
+
+    resp = await client.post(
+        f"{settings.ollama_base_url}/api/chat",
+        json=payload,
+        timeout=60.0,
+    )
+    resp.raise_for_status()
+    native = resp.json()
+
+    # Adapt native Ollama response → OpenAI-compat shape (reused by _parse_response)
+    msg = native.get("message", {})
+    return {
+        "choices": [{"message": {"content": msg.get("content", ""), "tool_calls": msg.get("tool_calls")}, "finish_reason": "stop"}],
+        "usage": {
+            "prompt_tokens": native.get("prompt_eval_count", 0),
+            "completion_tokens": native.get("eval_count", 0),
+        },
+    }
+
+
 def _parse_response(raw: dict, provider: str, model: str, latency_ms: int) -> ModelResponse:
     if provider == "anthropic":
         content_blocks = raw.get("content", [])
@@ -125,6 +161,8 @@ async def layer4_reason(
                     raw = await _call_anthropic(messages, tools, model, _client)
                 elif provider == "openai":
                     raw = await _call_openai(messages, tools, model, _client)
+                elif provider == "ollama":
+                    raw = await _call_ollama(messages, tools, model, _client)
                 else:
                     raise PipelineError(4, "unsupported_provider", f"Provider '{provider}' not supported")
             except httpx.TimeoutException as e:

@@ -50,6 +50,7 @@ async def resume_agent(
     svc = KillSwitchService(redis, db)
     try:
         await svc.resume(body.agent_id, body.operator_id, body.reason, body.tenant_id)
+        await redis.delete(f"sentinel:agent:{body.agent_id}:action_count")
         await db.commit()
         return {"status": "active", "agent_id": body.agent_id}
     except ValueError as e:

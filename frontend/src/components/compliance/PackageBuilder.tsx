@@ -1,12 +1,24 @@
 'use client'
 import { useState } from 'react'
-import { api } from '@/lib/api'
+import { api, DEMO_TENANT_ID } from '@/lib/api'
 
 const REGULATIONS = ['EU_AI_ACT', 'NIST_AI_RMF', 'COLORADO_SB205', 'HIPAA']
+const REG_LABELS: Record<string, string> = {
+  EU_AI_ACT: 'EU AI Act',
+  NIST_AI_RMF: 'NIST AI RMF',
+  COLORADO_SB205: 'Colorado SB 205',
+  HIPAA: 'HIPAA',
+}
+
+function todayEnd(): string {
+  const d = new Date()
+  d.setHours(23, 59, 59, 0)
+  return d.toISOString().slice(0, 19)
+}
 
 export function PackageBuilder() {
   const [start, setStart] = useState('2026-06-01T00:00:00')
-  const [end, setEnd] = useState('2026-06-22T23:59:59')
+  const [end, setEnd] = useState(todayEnd)
   const [selected, setSelected] = useState<string[]>(REGULATIONS)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
@@ -21,7 +33,7 @@ export function PackageBuilder() {
     setError(null)
     try {
       const pkg = await api.compliance.generate({
-        tenant_id: 'default',
+        tenant_id: DEMO_TENANT_ID,
         time_range_start: start,
         time_range_end: end,
         regulations: selected,
@@ -63,7 +75,7 @@ export function PackageBuilder() {
             {REGULATIONS.map((r) => (
               <label key={r} className="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
                 <input type="checkbox" checked={selected.includes(r)} onChange={() => toggleReg(r)} className="accent-sentinel-purple" />
-                {r}
+                {REG_LABELS[r] ?? r}
               </label>
             ))}
           </div>
@@ -110,7 +122,7 @@ export function PackageBuilder() {
               <div className="space-y-1.5">
                 {result.gap_analysis.slice(0, 10).map((gap: any, i: number) => (
                   <div key={i} className="text-xs bg-amber-950/30 border border-amber-900/50 rounded p-2">
-                    <span className="text-amber-300 font-medium">{gap.regulation} — {gap.control_id}</span>
+                    <span className="text-amber-300 font-medium">{REG_LABELS[gap.regulation] ?? gap.regulation} — {gap.control_id}</span>
                     <p className="text-slate-400 mt-0.5">{gap.gap_description}</p>
                   </div>
                 ))}

@@ -3,10 +3,10 @@ import type { DashboardMetrics } from '@/lib/types'
 interface Props { metrics: DashboardMetrics | null }
 
 const CARDS = [
-  { key: 'total_requests', label: 'Total Requests', color: 'text-blue-400' },
-  { key: 'blocked_requests', label: 'Blocked (L3)', color: 'text-red-400' },
-  { key: 'anomalies_flagged', label: 'Anomalies (L6)', color: 'text-sentinel-purple-light' },
-  { key: 'compliance_packages', label: 'Compliance Pkgs (L7)', color: 'text-green-400' },
+  { key: 'total_requests', label: 'Requests (24h)', color: 'text-blue-400' },
+  { key: 'blocked_requests', label: 'Blocked', color: 'text-red-400' },
+  { key: 'anomalies_flagged', label: 'Anomalies', color: 'text-sentinel-purple-light' },
+  { key: 'compliance_packages', label: 'Compliance Pkgs', color: 'text-green-400' },
 ] as const
 
 export function MetricCards({ metrics }: Props) {

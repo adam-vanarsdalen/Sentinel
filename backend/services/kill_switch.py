@@ -80,6 +80,18 @@ class KillSwitchService:
             pipe.set(f"sentinel:agent:{agent_id}:operator_id", operator_id)
         await pipe.execute()
 
+        # Persist state to DB so agent list reflects current state
+        import uuid as _uuid
+        from models.agent import Agent as AgentModel
+        from sqlalchemy import select as _select
+        result = await self._db.execute(
+            _select(AgentModel).where(AgentModel.id == _uuid.UUID(agent_id))
+        )
+        db_agent = result.scalar_one_or_none()
+        if db_agent:
+            db_agent.state = new_state
+            await self._db.flush()
+
         # Broadcast via pub/sub
         event = json.dumps({
             "type": "kill_switch_event",

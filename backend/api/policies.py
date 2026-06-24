@@ -74,7 +74,20 @@ async def create_policy(body: PolicyCreate, db: AsyncSession = Depends(get_db)):
     )
 
 
-@router.get("/")
+@router.get("/", response_model=list[PolicyResponse])
 async def list_policies(tenant_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Policy).where(Policy.tenant_id == uuid.UUID(tenant_id)))
-    return [str(p.id) for p in result.scalars().all()]
+    return [
+        PolicyResponse(
+            id=str(p.id),
+            tenant_id=str(p.tenant_id),
+            name=p.name,
+            version=p.version,
+            action_limit_session=p.action_limit_session,
+            allowed_models=p.allowed_models or [],
+            forbidden_endpoints=p.forbidden_endpoints or [],
+            forbidden_data_classes=p.forbidden_data_classes or [],
+            is_active=p.is_active,
+        )
+        for p in result.scalars().all()
+    ]

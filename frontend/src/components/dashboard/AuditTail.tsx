@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
+import { api, DEMO_TENANT_ID } from '@/lib/api'
 import type { AuditEntry } from '@/lib/types'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -10,7 +10,7 @@ const STATUS_COLORS: Record<string, string> = {
   error: 'text-red-300',
 }
 
-export function AuditTail({ tenantId = 'default' }: { tenantId?: string }) {
+export function AuditTail({ tenantId = DEMO_TENANT_ID }: { tenantId?: string }) {
   const [entries, setEntries] = useState<AuditEntry[]>([])
 
   useEffect(() => {

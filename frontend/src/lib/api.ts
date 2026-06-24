@@ -1,4 +1,5 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+export const DEMO_TENANT_ID = '00000000-0000-0000-0000-000000000001'
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`)
@@ -31,9 +32,9 @@ export const api = {
     list: (tenantId: string, limit = 50) => get(`/api/audit/?tenant_id=${tenantId}&limit=${limit}`),
   },
   killSwitch: {
-    fire: (agentId: string, operatorId: string, reason: string, tenantId = 'default') =>
+    fire: (agentId: string, operatorId: string, reason: string, tenantId = DEMO_TENANT_ID) =>
       post('/api/kill_switch/fire', { agent_id: agentId, operator_id: operatorId, reason, tenant_id: tenantId }),
-    resume: (agentId: string, operatorId: string, reason: string, tenantId = 'default') =>
+    resume: (agentId: string, operatorId: string, reason: string, tenantId = DEMO_TENANT_ID) =>
       post('/api/kill_switch/resume', { agent_id: agentId, operator_id: operatorId, reason, tenant_id: tenantId }),
     state: (agentId: string) => get(`/api/kill_switch/state/${agentId}`),
   },

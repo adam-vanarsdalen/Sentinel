@@ -4,15 +4,19 @@ from __future__ import annotations
 import asyncio
 import json
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 from typing import Any
 
 import redis.asyncio as aioredis
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import func, select
 
 from api import agents, alerts, audit, compliance, dashboard, kill_switch, policies, proxy
 from config import settings
+from database import AsyncSessionLocal
 from middleware.request_id import RequestIdMiddleware
+from models.audit_entry import AuditEntry
 
 
 class ConnectionManager:
@@ -49,18 +53,59 @@ async def lifespan(app: FastAPI):
 
     async def _pubsub_relay():
         pubsub = redis.pubsub()
-        await pubsub.psubscribe("sentinel:alerts:*")
+        await pubsub.psubscribe("sentinel:alerts:*", "sentinel:requests:*")
         async for message in pubsub.listen():
             if message["type"] == "pmessage":
                 try:
+                    pattern = message["pattern"]
+                    if isinstance(pattern, bytes):
+                        pattern = pattern.decode()
                     data = json.loads(message["data"])
-                    await manager.broadcast("alerts", data)
+                    if ":alerts:" in pattern:
+                        await manager.broadcast("alerts", data)
+                    elif ":requests:" in pattern:
+                        await manager.broadcast("requests", data)
                 except Exception:
                     pass
 
-    task = asyncio.create_task(_pubsub_relay())
+    async def _metrics_broadcast():
+        while True:
+            await asyncio.sleep(2)
+            if not manager.active.get("metrics"):
+                continue
+            try:
+                cutoff = datetime.utcnow() - timedelta(seconds=60)
+                async with AsyncSessionLocal() as session:
+                    layer_rows = await session.execute(
+                        select(AuditEntry.layer, func.count().label("cnt"))
+                        .where(AuditEntry.created_at >= cutoff)
+                        .group_by(AuditEntry.layer)
+                    )
+                    layer_rps = {
+                        row.layer: round(row.cnt / 60, 3)
+                        for row in layer_rows
+                    }
+                    total_row = await session.execute(
+                        select(func.count())
+                        .select_from(AuditEntry)
+                        .where(
+                            AuditEntry.created_at >= cutoff,
+                            AuditEntry.action.in_(["pipeline_complete", "request_blocked"]),
+                        )
+                    )
+                    total_rps = round((total_row.scalar() or 0) / 60, 3)
+                await manager.broadcast("metrics", {
+                    "layer_throughputs": layer_rps,
+                    "total_rps": total_rps,
+                })
+            except Exception:
+                pass
+
+    relay_task = asyncio.create_task(_pubsub_relay())
+    metrics_task = asyncio.create_task(_metrics_broadcast())
     yield
-    task.cancel()
+    relay_task.cancel()
+    metrics_task.cancel()
     await redis.aclose()
 
 
@@ -104,9 +149,33 @@ async def ws_requests(websocket: WebSocket):
         manager.disconnect(websocket, "requests")
 
 
+async def _send_current_metrics(ws: WebSocket) -> None:
+    try:
+        cutoff = datetime.utcnow() - timedelta(seconds=60)
+        async with AsyncSessionLocal() as session:
+            layer_rows = await session.execute(
+                select(AuditEntry.layer, func.count().label("cnt"))
+                .where(AuditEntry.created_at >= cutoff)
+                .group_by(AuditEntry.layer)
+            )
+            layer_rps = {row.layer: round(row.cnt / 60, 3) for row in layer_rows}
+            total_row = await session.execute(
+                select(func.count()).select_from(AuditEntry)
+                .where(
+                    AuditEntry.created_at >= cutoff,
+                    AuditEntry.action.in_(["pipeline_complete", "request_blocked"]),
+                )
+            )
+            total_rps = round((total_row.scalar() or 0) / 60, 3)
+        await ws.send_json({"layer_throughputs": layer_rps, "total_rps": total_rps})
+    except Exception:
+        pass
+
+
 @app.websocket("/ws/metrics")
 async def ws_metrics(websocket: WebSocket):
     await manager.connect(websocket, "metrics")
+    await _send_current_metrics(websocket)
     try:
         while True:
             await websocket.receive_text()

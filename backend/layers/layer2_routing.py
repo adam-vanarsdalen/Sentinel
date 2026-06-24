@@ -5,6 +5,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config import settings
 from schemas.proxy import PipelineError, PipelineRequest, RoutingDecision
 
 PROVIDER_MAP: dict[str, str] = {
@@ -12,10 +13,19 @@ PROVIDER_MAP: dict[str, str] = {
     "gpt": "openai",
     "llama": "ollama",
     "mistral": "ollama",
+    "qwen": "ollama",
+    "minimax": "ollama",
+    "kimi": "ollama",
+    "glm": "ollama",
 }
 
-DEFAULT_MODEL = "claude-haiku-4-5-20251001"
-DEFAULT_PROVIDER = "anthropic"
+# Fall back to Ollama when no cloud API keys are configured.
+if not settings.anthropic_api_key and not settings.openai_api_key:
+    DEFAULT_MODEL = settings.ollama_default_model
+    DEFAULT_PROVIDER = "ollama"
+else:
+    DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+    DEFAULT_PROVIDER = "anthropic"
 
 MODEL_COSTS: dict[str, float] = {
     "claude-haiku-4-5-20251001": 0.000025,

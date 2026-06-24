@@ -86,9 +86,13 @@ async def layer1_ingest(raw: dict[str, Any], source: str, tenant_id: str) -> Pip
 
     input_tokens_estimate = _estimate_tokens(messages)
 
+    # agent_id can come from the request body or from X-Agent-ID header
+    agent_id: str | None = raw.get("agent_id") or raw_headers.get("x-agent-id")
+
     return PipelineRequest(
         timestamp=datetime.now(timezone.utc),
         tenant_id=tenant_id,
+        agent_id=agent_id,
         source=source,
         messages=messages,
         tools=tools,

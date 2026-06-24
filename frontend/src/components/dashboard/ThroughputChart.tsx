@@ -1,21 +1,56 @@
 'use client'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useWebSocket } from '@/hooks/useWebSocket'
+import { DEMO_TENANT_ID } from '@/lib/api'
 
 interface DataPoint { t: string; rps: number }
+interface LiveMetrics { layer_throughputs: Record<string, number>; total_rps: number }
 
-export function ThroughputChart({ rps = 0 }: { rps?: number }) {
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+function timeStr(d = new Date()) {
+  return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+function seedPoints(rps: number): DataPoint[] {
+  const now = Date.now()
+  return Array.from({ length: 30 }, (_, i) => ({
+    t: timeStr(new Date(now - (29 - i) * 1000)),
+    rps,
+  }))
+}
+
+export function ThroughputChart() {
   const [data, setData] = useState<DataPoint[]>([])
+  const currentRps = useRef(0)
+  const { messages } = useWebSocket<LiveMetrics>('/ws/metrics')
 
+  // Seed with historical rps on mount
   useEffect(() => {
-    const tick = () => {
-      const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
-      setData((prev) => [...prev.slice(-29), { t: now, rps }])
+    fetch(`${API_BASE}/api/dashboard/recent-rps?tenant_id=${DEMO_TENANT_ID}`)
+      .then((r) => r.json())
+      .then(({ rps }: { rps: number }) => {
+        currentRps.current = rps
+        setData(seedPoints(rps))
+      })
+      .catch(() => setData(seedPoints(0)))
+  }, [])
+
+  // Track latest rps from WebSocket
+  useEffect(() => {
+    if (messages.length > 0) {
+      currentRps.current = messages[0].total_rps
     }
-    tick()
-    const id = setInterval(tick, 1000)
+  }, [messages])
+
+  // Tick every second
+  useEffect(() => {
+    const id = setInterval(() => {
+      setData((prev) => [...prev.slice(-29), { t: timeStr(), rps: currentRps.current }])
+    }, 1000)
     return () => clearInterval(id)
-  }, [rps])
+  }, [])
 
   return (
     <div className="bg-sentinel-panel border border-sentinel-border rounded-lg p-4 mb-4">

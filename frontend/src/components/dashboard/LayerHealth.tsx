@@ -23,7 +23,7 @@ export function LayerHealth({ throughputs = {} }: { throughputs?: Record<number,
                   L{n}: {name}
                   {diff && ' ★'}
                 </span>
-                <span className="text-slate-500">{rps}/s</span>
+                <span className="text-slate-500">{rps > 0 ? `${rps}/s` : '—'}</span>
               </div>
               <div className="h-1.5 bg-sentinel-border rounded-full overflow-hidden">
                 <div

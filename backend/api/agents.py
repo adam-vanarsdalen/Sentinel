@@ -6,7 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dependencies import get_db
@@ -57,7 +57,7 @@ async def create_agent(body: AgentCreate, db: AsyncSession = Depends(get_db)):
 
 @router.get("/", response_model=list[AgentResponse])
 async def list_agents(tenant_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Agent).where(Agent.tenant_id == uuid.UUID(tenant_id)))
+    result = await db.execute(select(Agent).where(Agent.tenant_id == uuid.UUID(tenant_id)).order_by(asc(Agent.created_at)))
     agents = result.scalars().all()
     return [
         AgentResponse(
